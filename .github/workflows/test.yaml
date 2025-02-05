@@ -72,7 +72,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: scientist-softserv/actions/setup-env@v0.0.13
+        uses: notch8/actions/setup-env@v0.0.13
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
