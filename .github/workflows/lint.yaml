@@ -5,7 +5,7 @@ on:
       lint_cmd:
         required: false
         type: string
-        default: docker-compose run web bundle exec rubocop --parallel --format progress
+        default: docker compose run web bundle exec rubocop --parallel --format progress
       subdir:
         default: '.'
         type: string
@@ -20,7 +20,7 @@ on:
       lint_cmd:
         required: false
         type: string
-        default: docker-compose run web bundle exec rubocop --parallel --format progress
+        default: docker compose run web bundle exec rubocop --parallel --format progress
       subdir:
         default: '.'
         type: string
@@ -55,11 +55,11 @@ jobs:
           cd ${{ inputs.subdir }};
           touch .env.development;
           touch .env;
-          docker-compose pull web
+          docker compose pull web
       - name: Pull worker image to prevent build
         run: >-
           cd ${{ inputs.subdir }};
-          docker-compose pull worker
+          docker compose pull worker
         if: ${{ inputs.worker }}
       - name: Run Rubocop
         run: >-
