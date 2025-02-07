@@ -47,17 +47,17 @@ jobs:
           cd ${{ inputs.subdir }};
           touch .env.development;
           touch .env;
-          docker-compose pull web
+          docker compose pull web
       - name: Pull worker image to prevent build
         run: >-
           cd ${{ inputs.subdir }};
-          docker-compose pull worker
+          docker compose pull worker
         if: ${{ inputs.worker }}
       - name: Run Rubocop
         run: >-
           cd ${{ inputs.subdir }};
           chmod 777 db/schema.rb;
-          docker-compose run web bundle exec rubocop --parallel --format progress
+          docker compose run web bundle exec rubocop --parallel --format progress
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v3
         if: always() # always run even if the previous step fails

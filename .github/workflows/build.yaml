@@ -84,7 +84,7 @@ jobs:
           cd ${{ inputs.subdir }};
           touch .env.development;
           touch .env;
-          TAG=latest docker-compose pull web || true
+          TAG=latest docker compose pull web || true
       - name: Retag action for web
         id: meta-web
         uses: docker/metadata-action@v4.1.1
