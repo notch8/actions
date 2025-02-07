@@ -152,7 +152,7 @@ jobs:
         with:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/solr:${{ env.TAG }}
           context: ./solr
-          platforms: ${{ inputs.platforms }}
+          platforms: "linux/amd64"
           push: true
           tags: |
             ${{ steps.meta-solr.outputs.tags }}
