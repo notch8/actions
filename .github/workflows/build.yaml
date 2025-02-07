@@ -118,7 +118,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push web
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v3
         with:
           build-args: |
             APP_PATH=${{ inputs.subdir }}
@@ -133,7 +133,7 @@ jobs:
           target: ${{ inputs.target }}
       - name: Build and push worker
         if: ${{ inputs.worker }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v3
         with:
           build-args: |
             APP_PATH=${{ inputs.subdir }}
@@ -148,11 +148,11 @@ jobs:
           target: ${{ inputs.workerTarget }}
       - name: Build and push solr
         if: ${{ inputs.solr }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v3
         with:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/solr:${{ env.TAG }}
           context: ./solr
-          platforms: "linux/amd64"
+          platforms: #${{ inputs.platforms }}
           push: true
           tags: |
             ${{ steps.meta-solr.outputs.tags }}
