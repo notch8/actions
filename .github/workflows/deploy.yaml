@@ -74,7 +74,9 @@ jobs:
       HELM_EXTRA_ARGS: >
         --values ops/${{ inputs.environment }}-deploy.yaml
       HELM_RELEASE_NAME: ${{ github.event.repository.name }}-${{ inputs.environment }}
+      HYKU_USER_DEFAULT_PASSWORD: ${{ secrets.HYKU_USER_DEFAULT_PASSWORD }}
       IA_PASSWORD: ${{ secrets.IA_PASSWORD }}
+      INITIAL_ADMIN_EMAIL: ${{ secrets.INITIAL_ADMIN_EMAIL }}
       INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
       INITIAL_SUPER_ADMIN_PASSWORD: ${{ secrets.INITIAL_SUPER_ADMIN_PASSWORD }}
       KUBECONFIG: ./kubeconfig.yml
@@ -102,6 +104,8 @@ jobs:
       SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_ACCESS_TOKEN }}
       SQUARE_WEBHOOK_SIGNATURE_KEY: ${{ secrets.SQUARE_WEBHOOK_SIGNATURE_KEY }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
       WORDPRESS_PASSWORD: ${{ secrets.WORDPRESS_PASSWORD }}
     steps:
       - id: setup
