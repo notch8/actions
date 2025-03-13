@@ -124,6 +124,7 @@ jobs:
       - name: Start containers
         run: >-
           cd ${{ inputs.subdir }};
+          if [ -e node_modules ]; then rm -rf node_modules; fi;
           [ -f "db/schema.rb" ] && chmod 777 db/schema.rb;
           [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh;
           docker compose pull --ignore-pull-failures;
