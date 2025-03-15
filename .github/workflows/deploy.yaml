@@ -110,7 +110,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v0.0.24
+        uses: notch8/actions/setup-env@v0.0.25
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
