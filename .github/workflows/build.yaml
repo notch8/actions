@@ -74,7 +74,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: scientist-softserv/actions/setup-env@v0.0.23
+        uses: notch8/actions/setup-env@v0.0.24
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
@@ -133,7 +133,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push base
         if: ${{ inputs.baseTarget != '' }}
-        uses: scientist-softserv/actions/build-and-push@v0.0.23
+        uses: notch8/actions/build-and-push@v0.0.24
         with:
           type: base
           location: /base
@@ -141,7 +141,7 @@ jobs:
           tags: ${{ steps.meta-base.outputs.tags }}
       - name: Build and push web and worker
         if: ${{ inputs.webTarget != '' && inputs.workerTarget != '' }}
-        uses: scientist-softserv/actions/build-and-push@v0.0.23
+        uses: notch8/actions/build-and-push@v0.0.24
         with:
           type: web,worker
           location: ""
@@ -149,7 +149,7 @@ jobs:
           tags: ${{ steps.meta-base.outputs.tags }}
       - name: Build and push web
         if: ${{ inputs.webTarget != '' && inputs.workerTarget == '' }}
-        uses: scientist-softserv/actions/build-and-push@v0.0.23
+        uses: notch8/actions/build-and-push@v0.0.24
         with:
           type: web
           location: ""
@@ -157,7 +157,7 @@ jobs:
           tags: ${{ steps.meta-base.outputs.tags }}
       - name: Build and push worker
         if: ${{ inputs.workerTarget != '' && inputs.webTarget == '' }}
-        uses: scientist-softserv/actions/build-and-push@v0.0.23
+        uses: notch8/actions/build-and-push@v0.0.24
         with:
           type: worker
           location: /worker
@@ -165,7 +165,7 @@ jobs:
           tags: ${{ steps.meta-worker.outputs.tags }}
       - name: Build and push solr
         if: ${{ inputs.solrTarget != '' }}
-        uses: scientist-softserv/actions/build-and-push@v0.0.23
+        uses: notch8/actions/build-and-push@v0.0.24
         with:
           type: solr
           location: /solr
