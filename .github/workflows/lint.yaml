@@ -7,7 +7,7 @@ on:
         required: false
         type: string
       rubocop_cmd:
-        default:  bundle exec rubocop --parallel --format progress
+        default: bundle exec rubocop --parallel --format progress
         required: false
         type: string
       solrTarget:
@@ -15,7 +15,7 @@ on:
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
         required: false
@@ -43,7 +43,7 @@ on:
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
         required: false
@@ -92,9 +92,9 @@ jobs:
           docker compose pull web || true;
           docker compose run -T web sh -c
           "${{ inputs.rubocop_cmd }}"
-      - name: Archive spec reports
-        uses: actions/upload-artifact@v4
+      - id: after_care
+        name: Upload Logs and Results
+        uses: notch8/actions/after-care@after
         if: always()
         with:
-          name: rubocop-reports
-          path: 'rubocop*.xml'
+          reports: "rubocop*.xml"

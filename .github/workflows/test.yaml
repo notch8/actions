@@ -13,11 +13,11 @@ on:
       node_index:
         required: false
         type: string
-        default: '[0, 1, 2]'
+        default: "[0, 1, 2]"
       node_total:
         required: false
         type: string
-        default: '[3]'
+        default: "[3]"
       rspec_cmd:
         required: false
         type: string
@@ -35,7 +35,7 @@ on:
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
         required: false
@@ -53,11 +53,11 @@ on:
       node_index:
         required: false
         type: string
-        default: '[0, 1, 2]'
+        default: "[0, 1, 2]"
       node_total:
         required: false
         type: string
-        default: '[3]'
+        default: "[3]"
       rspec_cmd:
         required: false
         type: string
@@ -67,15 +67,15 @@ on:
         type: string
         default: "RAILS_ENV=test bundle exec rake db:create db:schema:load db:migrate"
       setup_solr_cmd:
-          required: false
-          type: string
-          default: 'solrcloud-upload-configset.sh "${CONFDIR}" && SOLR_COLLECTION_NAME=hydra-test solrcloud-assign-configset.sh && solrcloud-assign-configset.sh'
+        required: false
+        type: string
+        default: 'solrcloud-upload-configset.sh "${CONFDIR}" && SOLR_COLLECTION_NAME=hydra-test solrcloud-assign-configset.sh && solrcloud-assign-configset.sh'
       solrTarget:
         description: "Used to set your target for the solr image"
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
         required: false
@@ -165,9 +165,9 @@ jobs:
           if [ -f rspec.xml ]; then
             mv rspec.xml rspec-${CI_NODE_INDEX}.xml
           fi
-      - name: Archive spec reports
-        uses: actions/upload-artifact@v4
+      - id: after_care
+        name: Upload Logs and Results
+        uses: notch8/actions/after-care@after
         if: always()
         with:
-          name: spec-reports-${{ matrix.ci_node_index }}
-          path: '**/rspec*.xml'
+          reports: "rspec-*.xml"
