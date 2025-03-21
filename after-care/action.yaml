@@ -10,6 +10,7 @@ runs:
     - name: Dump Docker Compose Logs
       run: docker compose logs > docker-compose.log
       if: always()
+      shell: bash
     - name: Archive docker-compose logs
       uses: actions/upload-artifact@v4
       if: always()
