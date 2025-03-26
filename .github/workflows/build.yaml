@@ -101,7 +101,7 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/base
+            ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/base
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
@@ -112,7 +112,7 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}
+            ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
@@ -123,7 +123,7 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/worker
+            ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/worker
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
@@ -134,7 +134,7 @@ jobs:
         uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/solr
+            ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/solr
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
