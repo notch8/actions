@@ -98,39 +98,47 @@ jobs:
       - name: Retag action for base
         if: ${{ inputs.baseTarget != '' }}
         id: meta-base
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/base
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/base
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=ref,event=tag
       - name: Retag action for web
         if: ${{ inputs.webTarget != '' }}
         id: meta-web
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=ref,event=tag
       - name: Retag action for worker
         if: ${{ inputs.workerTarget != '' }}
         id: meta-worker
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/worker
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/worker
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=ref,event=tag
       - name: Retag action for solr
         if: ${{ inputs.solrTarget != '' }}
         id: meta-solr
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v5.7.0
         with:
           images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/solr
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/solr
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=ref,event=tag
       - name: Build and push base
         if: ${{ inputs.baseTarget != '' }}
         uses: notch8/actions/build-and-push@v0.0.25
