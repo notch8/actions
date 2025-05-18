@@ -35,7 +35,7 @@ runs:
       with:
         fetch-depth: 0
         submodules: true
-        token: ${{ inputs.token }}
+        token: ${{ secrets.CHECKOUT_TOKEN || inputs.token || secrets.GITHUB_TOKEN }}
         clean: false
     - name: Make sure env files are present if missing
       run: >-
