@@ -72,13 +72,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set effective checkout token
+        run: |
+          if [ -n "${{ secrets.CHECKOUT_TOKEN }}" ]; then
+            echo "CHECKOUT_TOKEN=${{ secrets.CHECKOUT_TOKEN }}" >> $GITHUB_ENV
+          else
+            echo "CHECKOUT_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+          fi
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+          token: ${{ env.CHECKOUT_TOKEN }}
       - id: setup
         name: Setup
         uses: notch8/actions/setup-env@v0.0.26
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
-          token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ env.CHECKOUT_TOKEN }}
           subdir: ${{ inputs.subdir }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
