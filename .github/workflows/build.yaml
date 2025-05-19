@@ -72,26 +72,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Set effective checkout token
-        run: |
-          if [ -n "${{ secrets.CHECKOUT_TOKEN }}" ]; then
-            echo "CHECKOUT_TOKEN=${{ secrets.CHECKOUT_TOKEN }}" >> $GITHUB_ENV
-          else
-            echo "CHECKOUT_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
-          fi
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: true
-          token: ${{ env.CHECKOUT_TOKEN }}
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v0.0.26
+        uses: notch8/actions/setup-env@v0.0.25
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
-          token: ${{ env.CHECKOUT_TOKEN }}
+          token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -146,7 +133,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push base
         if: ${{ inputs.baseTarget != '' }}
-        uses: notch8/actions/build-and-push@v0.0.26
+        uses: notch8/actions/build-and-push@v0.0.25
         with:
           type: base
           location: /base
@@ -154,7 +141,7 @@ jobs:
           tags: ${{ steps.meta-base.outputs.tags }}
       - name: Build and push web and worker
         if: ${{ inputs.webTarget != '' && inputs.workerTarget != '' }}
-        uses: notch8/actions/build-and-push@v0.0.26
+        uses: notch8/actions/build-and-push@v0.0.25
         with:
           type: web,worker
           location: ""
@@ -162,7 +149,7 @@ jobs:
           tags: ${{ steps.meta-base.outputs.tags }}
       - name: Build and push web
         if: ${{ inputs.webTarget != '' && inputs.workerTarget == '' }}
-        uses: notch8/actions/build-and-push@v0.0.26
+        uses: notch8/actions/build-and-push@v0.0.25
         with:
           type: web
           location: ""
@@ -170,7 +157,7 @@ jobs:
           tags: ${{ steps.meta-base.outputs.tags }}
       - name: Build and push worker
         if: ${{ inputs.workerTarget != '' && inputs.webTarget == '' }}
-        uses: notch8/actions/build-and-push@v0.0.26
+        uses: notch8/actions/build-and-push@v0.0.25
         with:
           type: worker
           location: /worker
@@ -178,7 +165,7 @@ jobs:
           tags: ${{ steps.meta-worker.outputs.tags }}
       - name: Build and push solr
         if: ${{ inputs.solrTarget != '' }}
-        uses: notch8/actions/build-and-push@v0.0.26
+        uses: notch8/actions/build-and-push@v0.0.25
         with:
           type: solr
           location: /solr
