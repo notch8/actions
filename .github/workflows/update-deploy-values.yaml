@@ -25,7 +25,7 @@ on:
 jobs:
   update-deploy-tag:
     runs-on: ubuntu-latest
-    if: vars.OPS_REPOSITORY != ''
+    if: inputs.ops_repository != ''
 
     steps:
       - id: setup
@@ -45,7 +45,7 @@ jobs:
       - name: Checkout ops repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ ops_repository }}
+          repository: ${{ inputs.ops_repository }}
           token: ${{ steps.app-token.outputs.token }}
           path: ops-repo
           fetch-depth: 1
@@ -87,13 +87,13 @@ jobs:
           Actor: ${{ github.actor }}"
 
           git remote set-url origin \
-            https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ ops_repository }}.git
+            https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ inputs.ops_repository }}.git
           git push origin main
 
       - name: Summary
         run: |
           echo "✅ Successfully updated Helm values file(s)"
-          echo "Repository: ${{ ops_repository }}"
+          echo "Repository: ${{ inputs.ops_repository }}"
           echo "Commit hash: ${TAG}"
           echo "Deploy with ArgoCD here:"
           echo "🚀 https://argo.notch8.cloud"
