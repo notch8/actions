@@ -6,14 +6,6 @@ on:
         required: true
         type: string
         description: "The ops repository to update (typically, notch8/<repo_name>_ops)"
-      APP_ID:
-        required: true
-        type: string
-        description: "ID of the GitHub App used to generate auth tokens"
-    secrets:
-      APP_PRIVATE_KEY:
-        required: true
-  # TODO: add workflow_dispatch?
 
 jobs:
   update-deploy-tag:
@@ -30,8 +22,8 @@ jobs:
       - uses: actions/create-github-app-token@v2
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ vars.OPS_REPO_WRITER_APP_ID }}
+          private-key: ${{ secrets.OPS_REPO_WRITER_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
       - name: Checkout ops repository
