@@ -6,12 +6,6 @@ on:
         required: true
         type: string
         description: "The ops repository to update (typically, notch8/<repo_name>_ops)"
-  workflow_dispatch:
-    inputs:
-      ops_repository:
-        required: true
-        type: string
-        description: "The ops repository to update (typically, notch8/<repo_name>_ops)"
 
 jobs:
   update-deploy-tag:
