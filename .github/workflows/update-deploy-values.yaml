@@ -10,7 +10,7 @@ on:
 jobs:
   update-deploy-tag:
     runs-on: ubuntu-latest
-    if: inputs.ops_repository != '' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # if: inputs.ops_repository != '' && github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - id: setup
