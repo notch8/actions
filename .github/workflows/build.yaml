@@ -38,6 +38,15 @@ on:
         default: false
   workflow_call:
     inputs:
+      action_ref:
+        description: "The branch or tag ref for the shared actions repo"
+        required: true
+        type: string
+      use_local_actions:
+        description: "Flag to use local actions instead of external ones"
+        required: false
+        type: boolean
+        default: false
       baseTarget:
         description: "Used to set your target for the base image"
         required: false
@@ -97,7 +106,7 @@ jobs:
       - name: Setup (Local)
         id: setup-local
         if: ${{ inputs.use_local_actions }}
-        uses: notch8/actions/setup-env@${{ github.action_ref }}
+        uses: notch8/actions/setup-env@${{ inputs.action_ref }}
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
