@@ -31,6 +31,11 @@ on:
         description: "Used to set your target for the worker image"
         required: false
         type: string
+      use_local_actions:
+        description: "When true, use local actions instead of external ones."
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       baseTarget:
@@ -62,6 +67,11 @@ on:
         description: "Used to set your target for the worker image"
         required: false
         type: string
+      use_local_actions:
+        description: "When true, use local actions to ensure correct PR checkout logic."
+        required: false
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -72,14 +82,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - id: setup
-        name: Setup
-        uses: notch8/actions/setup-env@v1.0.1
+      - uses: notch8/actions/setup-env@v1.0.1
+      - name: Setup (External Action)
+        if: ${{ !inputs.use_local_actions }}
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
+
+      - name: Setup (Local Action)
+        if: ${{ inputs.use_local_actions }}
+        uses: ./setup-env
+        with:
+          tag: ${{ inputs.tag }}
+          image_name: ${{ inputs.image_name }}
+          token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+          subdir: ${{ inputs.subdir }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -131,41 +151,87 @@ jobs:
             name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/solr
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-      - name: Build and push base
-        if: ${{ inputs.baseTarget != '' }}
-        uses: notch8/actions/build-and-push@v1.0.1
+
+      # Build and push steps now need the flag check
+      - name: Build and push base (External Action)
+        if: ${{ inputs.baseTarget != '' && !inputs.use_local_actions }}
+        uses: scientist-softserv/actions/build-and-push@v0.0.23
         with:
           type: base
           location: /base
           subdir: ${{ inputs.subdir }}
           tags: ${{ steps.meta-base.outputs.tags }}
-      - name: Build and push web and worker
-        if: ${{ inputs.webTarget != '' && inputs.workerTarget != '' }}
-        uses: notch8/actions/build-and-push@v1.0.1
+      - name: Build and push base (Local Action)
+        if: ${{ inputs.baseTarget != '' && inputs.use_local_actions }}
+        uses: ./build-and-push
+        with:
+          type: base
+          location: /base
+          subdir: ${{ inputs.subdir }}
+          tags: ${{ steps.meta-base.outputs.tags }}
+
+      - name: Build and push web and worker (External Action)
+        if: ${{ inputs.webTarget != '' && inputs.workerTarget != '' && !inputs.use_local_actions }}
+        uses: scientist-softserv/actions/build-and-push@v0.0.23
         with:
           type: web,worker
           location: ""
           subdir: ${{ inputs.subdir }}
           tags: ${{ steps.meta-base.outputs.tags }}
-      - name: Build and push web
-        if: ${{ inputs.webTarget != '' && inputs.workerTarget == '' }}
-        uses: notch8/actions/build-and-push@v1.0.1
+      - name: Build and push web and worker (Local Action)
+        if: ${{ inputs.webTarget != '' && inputs.workerTarget != '' && inputs.use_local_actions }}
+        uses: ./build-and-push
+        with:
+          type: web,worker
+          location: ""
+          subdir: ${{ inputs.subdir }}
+          tags: ${{ steps.meta-base.outputs.tags }}
+
+      - name: Build and push web (External Action)
+        if: ${{ inputs.webTarget != '' && inputs.workerTarget == '' && !inputs.use_local_actions }}
+        uses: scientist-softserv/actions/build-and-push@v0.0.23
         with:
           type: web
           location: ""
           subdir: ${{ inputs.subdir }}
           tags: ${{ steps.meta-base.outputs.tags }}
-      - name: Build and push worker
-        if: ${{ inputs.workerTarget != '' && inputs.webTarget == '' }}
-        uses: notch8/actions/build-and-push@v1.0.1
+      - name: Build and push web (Local Action)
+        if: ${{ inputs.webTarget != '' && inputs.workerTarget == '' && inputs.use_local_actions }}
+        uses: ./build-and-push
+        with:
+          type: web
+          location: ""
+          subdir: ${{ inputs.subdir }}
+          tags: ${{ steps.meta-base.outputs.tags }}
+
+      - name: Build and push worker (External Action)
+        if: ${{ inputs.workerTarget != '' && inputs.webTarget == '' && !inputs.use_local_actions }}
+        uses: scientist-softserv/actions/build-and-push@v0.0.23
         with:
           type: worker
           location: /worker
           subdir: ${{ inputs.subdir }}
           tags: ${{ steps.meta-worker.outputs.tags }}
-      - name: Build and push solr
-        if: ${{ inputs.solrTarget != '' }}
-        uses: notch8/actions/build-and-push@v1.0.1
+      - name: Build and push worker (Local Action)
+        if: ${{ inputs.workerTarget != '' && inputs.webTarget == '' && inputs.use_local_actions }}
+        uses: ./build-and-push
+        with:
+          type: worker
+          location: /worker
+          subdir: ${{ inputs.subdir }}
+          tags: ${{ steps.meta-worker.outputs.tags }}
+
+      - name: Build and push solr (External Action)
+        if: ${{ inputs.solrTarget != '' && !inputs.use_local_actions }}
+        uses: scientist-softserv/actions/build-and-push@v0.0.23
+        with:
+          type: solr
+          location: /solr
+          subdir: ${{ inputs.subdir }}
+          tags: ${{ steps.meta-solr.outputs.tags }}
+      - name: Build and push solr (Local Action)
+        if: ${{ inputs.solrTarget != '' && inputs.use_local_actions }}
+        uses: ./build-and-push
         with:
           type: solr
           location: /solr
