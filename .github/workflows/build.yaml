@@ -82,18 +82,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: notch8/actions/setup-env@v1.0.1
-      - name: Setup (External Action)
+      # This step runs if the flag is FALSE or not provided
+      - name: Setup (External)
+        id: setup-external
         if: ${{ !inputs.use_local_actions }}
+        uses: scientist-softserv/actions/setup-env@v0.0.23
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
 
-      - name: Setup (Local Action)
+      # This step runs if the flag is TRUE
+      - name: Setup (Local)
+        id: setup-local
         if: ${{ inputs.use_local_actions }}
-        uses: ./setup-env
+        uses: ./setup-env # Use the local, corrected action
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
