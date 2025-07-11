@@ -1,0 +1,83 @@
+name: Update Deploy Values
+on:
+  workflow_call:
+    inputs:
+      ops_repository:
+        required: true
+        type: string
+        description: "The ops repository to update (typically, notch8/<repo_name>_ops)"
+
+jobs:
+  update-deploy-tag:
+    runs-on: ubuntu-latest
+    if: inputs.ops_repository != '' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - id: setup
+        name: Setup
+        uses: notch8/actions/setup-env@v0.0.26
+        with:
+          token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.OPS_REPO_WRITER_APP_ID }}
+          private-key: ${{ secrets.OPS_REPO_WRITER_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout ops repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.ops_repository }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: ops-repo
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Update Helm values file
+        run: |
+          cd ops-repo
+
+          for values_file in $(find . -type f -name "values.yaml"); do
+            cp $values_file ${values_file}.backup
+
+            sed -i "s|tag: .*|tag: ${TAG}|g" $values_file
+
+            echo "=== Changes made to $values_file ==="
+            diff -u ${values_file}.backup $values_file || true
+
+            rm ${values_file}.backup
+          done
+
+      - name: Commit and push changes
+        run: |
+          cd ops-repo
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Check if there are changes to commit
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          find . -type f -name "values.yaml" -exec git add {} +
+          git commit -m "Update image tag to ${TAG}
+
+          Source: ${{ github.repository }}@${TAG}
+          Triggered by: ${{ github.event_name }}
+          Actor: ${{ github.actor }}"
+
+          git remote set-url origin \
+            https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ inputs.ops_repository }}.git
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "✅ Successfully updated Helm values file(s)"
+          echo "Repository: ${{ inputs.ops_repository }}"
+          echo "Commit hash: ${TAG}"
+          echo "Deploy with ArgoCD here:"
+          echo "🚀 https://argo.notch8.cloud"
