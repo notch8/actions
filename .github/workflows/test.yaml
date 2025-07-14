@@ -105,7 +105,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v0.0.26
+        uses: notch8/actions/setup-env@recursive_submodules
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}

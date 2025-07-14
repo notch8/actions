@@ -34,7 +34,7 @@ runs:
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
-        submodules: true
+        submodules: "recursive"
         token: ${{ inputs.token }}
         clean: false
     - name: Make sure env files are present if missing
