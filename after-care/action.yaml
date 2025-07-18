@@ -16,19 +16,19 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: docker-compose-logs
+        name: docker-compose-logs-${{ env.CI_NODE_INDEX || '0' }}
         path: docker-compose.log
 
     - name: Archive spec reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: rubocop-reports
+        name: rubocop-reports-${{ env.CI_NODE_INDEX || '0' }}
         path: ${{ inputs.reports }}
 
     - name: Upload SimpleCov Coverage JSON
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: simplecov-coverage-${{ github.job }}-${{ env.CI_NODE_INDEX || '0' }}
+        name: simplecov-coverage-${{ env.CI_NODE_INDEX || '0' }}
         path: coverage/.resultset.json

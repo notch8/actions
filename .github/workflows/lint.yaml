@@ -97,4 +97,6 @@ jobs:
         uses: notch8/actions/after-care@add-codecov
         if: always()
         with:
-          reports: "rubocop*.xml"
+          reports: "rubocop-${{ matrix.ci_node_index }}.xml"
+        env:
+          CI_NODE_INDEX: ${{ matrix.ci_node_index }}
