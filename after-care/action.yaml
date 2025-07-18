@@ -30,5 +30,5 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: coverage-${{ env.CI_NODE_INDEX || '0' }}
+        name: simplecov-coverage-${{ github.job }}-${{ env.CI_NODE_INDEX || '0' }}
         path: coverage/.resultset.json
