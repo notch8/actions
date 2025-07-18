@@ -94,7 +94,7 @@ jobs:
           "${{ inputs.rubocop_cmd }}"
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@after
+        uses: notch8/actions/after-care@add-codecov
         if: always()
         with:
           reports: "rubocop*.xml"
