@@ -31,7 +31,7 @@ runs:
       if: always()
       with:
         name: simplecov-coverage-${{ env.CI_NODE_INDEX || '0' }}
-        path: coverage/${{ env.CI_NODE_INDEX }}/.resultset.json
+        path: tmp/coverage/${{ env.CI_NODE_INDEX }}/.resultset.json
         include-hidden-files: true
         if-no-files-found: warn
         compression-level: 6
