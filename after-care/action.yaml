@@ -27,11 +27,12 @@ runs:
         path: ${{ inputs.reports }}
 
     - name: Upload SimpleCov result
-      if: always()
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: simplecov-coverage-${{ env.CI_NODE_INDEX }}
         path: coverage/${{ env.CI_NODE_INDEX }}/.resultset.json
+        include-hidden-files: true
         if-no-files-found: warn
         compression-level: 6
         overwrite: true
