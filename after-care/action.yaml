@@ -26,9 +26,12 @@ runs:
         name: rubocop-reports-${{ env.CI_NODE_INDEX || '0' }}
         path: ${{ inputs.reports }}
 
-    - name: Upload SimpleCov Coverage JSON
-      uses: actions/upload-artifact@v4
+    - name: Upload SimpleCov result
       if: always()
+      uses: actions/upload-artifact@v4
       with:
-        name: simplecov-coverage-${{ env.CI_NODE_INDEX || '0' }}
-        path: coverage/.resultset.json
+        name: simplecov-coverage-${{ env.CI_NODE_INDEX }}
+        path: coverage/${{ env.CI_NODE_INDEX }}/.resultset.json
+        if-no-files-found: warn
+        compression-level: 6
+        overwrite: true
