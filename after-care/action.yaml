@@ -26,18 +26,13 @@ runs:
         name: rubocop-reports-${{ env.CI_NODE_INDEX || '0' }}
         path: ${{ inputs.reports }}
 
-    - name: Upload SimpleCov result
+    - name: Archive SimpleCov results
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: simplecov-coverage-${{ env.CI_NODE_INDEX }}
+        name: simplecov-coverage-${{ env.CI_NODE_INDEX || '0' }}
         path: coverage/${{ env.CI_NODE_INDEX }}/.resultset.json
         include-hidden-files: true
         if-no-files-found: warn
         compression-level: 6
         overwrite: true
-
-    - name: Debug coverage path
-      if: always()
-      shell: bash
-      run: ls -al coverage/${{ env.CI_NODE_INDEX }}
