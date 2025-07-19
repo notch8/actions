@@ -35,3 +35,8 @@ runs:
         if-no-files-found: warn
         compression-level: 6
         overwrite: true
+
+    - name: Debug coverage path
+      if: always()
+      shell: bash
+      run: ls -al coverage/${{ env.CI_NODE_INDEX }}
