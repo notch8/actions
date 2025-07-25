@@ -7,8 +7,17 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Dump Docker Compose Logs
-      run: docker compose logs > docker-compose.log
+    - name: Dump Docker Compose Logs (gracefully)
+      run: |
+        LOGFILE=docker-compose.log
+        : > "$LOGFILE"
+        for c in $(docker ps --format '{{.Names}}'); do
+          echo "==== Logs for $c ====" >> "$LOGFILE"
+          if ! docker logs "$c" >> "$LOGFILE" 2>&1; then
+            echo "[WARN] Could not retrieve logs for $c" >> "$LOGFILE"
+          fi
+          echo "" >> "$LOGFILE"
+        done
       if: always()
       shell: bash
     - name: Archive docker-compose logs
