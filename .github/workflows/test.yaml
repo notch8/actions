@@ -116,11 +116,11 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
-        with:
-          limit-access-to-actor: true
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+      #   if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
+      #   with:
+      #     limit-access-to-actor: true
       - name: Start containers
         run: >-
           cd ${{ inputs.subdir }};
@@ -165,6 +165,11 @@ jobs:
           if [ -f rspec.xml ]; then
             mv rspec.xml rspec-${CI_NODE_INDEX}.xml
           fi
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'build' }}
+        with:
+          limit-access-to-actor: true
       - id: after_care
         name: Upload Logs and Results
         uses: notch8/actions/after-care@v1.0.2
