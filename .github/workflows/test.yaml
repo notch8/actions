@@ -105,7 +105,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v1.0.1
+        uses: notch8/actions/setup-env@v1.0.2
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -167,7 +167,7 @@ jobs:
           fi
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@after
+        uses: notch8/actions/after-care@v1.0.2
         if: always()
         with:
           reports: "rspec-*.xml"
