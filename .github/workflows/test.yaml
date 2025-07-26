@@ -7,26 +7,32 @@ on:
         required: false
         type: string
       confdir:
+        description: "Solr conf/config directory"
         required: false
         type: string
         default: "/app/samvera/hyrax-webapp/solr/config"
       node_index:
+        description: "Node index for Rspec test matrix"
         required: false
         type: string
         default: "[0, 1, 2]"
       node_total:
+        description: "Total nodes for Rspec test matrix"
         required: false
         type: string
         default: "[3]"
       rspec_cmd:
+        description: "Setup/Run Rspec test(s) command"
         required: false
         type: string
         default: "gem install semaphore_test_boosters && rspec_booster --job ${CI_NODE_INDEX}/${CI_NODE_TOTAL}"
       setup_db_cmd:
+        description: "Setup database command"
         required: false
         type: string
         default: "RAILS_ENV=test bundle exec rake db:create db:schema:load db:migrate"
       setup_solr_cmd:
+        description: "Setup solr command"
         required: false
         type: string
         default: 'solrcloud-upload-configset.sh "${CONFDIR}" && SOLR_COLLECTION_NAME=hydra-test solrcloud-assign-configset.sh && solrcloud-assign-configset.sh'
@@ -35,9 +41,11 @@ on:
         required: false
         type: string
       subdir:
+        description: "Used to set your subdirectory"
         default: "."
         type: string
       tag:
+        description: "tag"
         required: false
         type: string
   workflow_call:
@@ -116,11 +124,11 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
-      #   with:
-      #     limit-access-to-actor: true
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
+        with:
+          limit-access-to-actor: true
       - name: Start containers
         run: >-
           cd ${{ inputs.subdir }};
@@ -165,11 +173,6 @@ jobs:
           if [ -f rspec.xml ]; then
             mv rspec.xml rspec-${CI_NODE_INDEX}.xml
           fi
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
-        with:
-          limit-access-to-actor: true
       - id: after_care
         name: Upload Logs and Results
         uses: notch8/actions/after-care@hykuup-after-care
