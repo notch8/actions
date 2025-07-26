@@ -48,11 +48,6 @@ on:
         description: "tag"
         required: false
         type: string
-      coverage_path:
-        type: string
-        description: "Path to the coverage result inside the container"
-        required: false
-        default: "coverage/.resultset.json"
 
   workflow_call:
     inputs:
@@ -94,10 +89,6 @@ on:
       tag:
         required: false
         type: string
-      coverage_path:
-        type: string
-        required: false
-        default: "coverage/.resultset.json"
 
 env:
   REGISTRY: ghcr.io
@@ -200,7 +191,7 @@ jobs:
         if: always()
         run: |
           mkdir -p coverage
-          docker cp "$(docker compose ps -q web):/${{ inputs.coverage_path }}" coverage/.resultset.json || true
+          docker cp "$(docker compose ps -q web):/app/samvera/hyrax-webapp/coverage/." coverage/ || true
 
       - name: Move Code Coverage File
         if: always()
