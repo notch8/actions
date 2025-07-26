@@ -48,6 +48,12 @@ on:
         description: "tag"
         required: false
         type: string
+      coverage_path:
+        type: string
+        description: "Path to the coverage result inside the container"
+        required: false
+        default: "coverage/.resultset.json"
+
   workflow_call:
     inputs:
       baseTarget:
@@ -88,6 +94,10 @@ on:
       tag:
         required: false
         type: string
+      coverage_path:
+        type: string
+        required: false
+        default: "coverage/.resultset.json"
 
 env:
   REGISTRY: ghcr.io
@@ -118,17 +128,20 @@ jobs:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
+
       - name: Github Container Login
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
         with:
           limit-access-to-actor: true
+
       - name: Start containers
         run: >-
           cd ${{ inputs.subdir }};
@@ -137,6 +150,7 @@ jobs:
           [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh;
           docker compose pull --ignore-pull-failures;
           docker compose up -d
+
       - name: Setup Solr
         if: ${{ inputs.solrTarget != '' }}
         shell: bash
@@ -144,11 +158,13 @@ jobs:
           cd ${{ inputs.subdir }};
           docker compose exec -T solr sh -c
           "${{ inputs.setup_solr_cmd }}"
+
       - name: Setup db
         run: >-
           cd ${{ inputs.subdir }};
           docker compose exec -T web sh -c
           "${{ inputs.setup_db_cmd }}"
+
       - name: Run Specs
         id: run-specs
         env:
@@ -161,7 +177,13 @@ jobs:
           cd ${{ inputs.subdir }};
           docker compose exec -T web sh -c
           "${{ inputs.rspec_cmd }}"
-      - name: Move Test Files
+
+      - name: Copy RSpec XML From Container
+        if: always()
+        run: >-
+          docker cp "$(docker compose ps -q web):/app/rspec.xml" rspec.xml || true
+
+      - name: Move RSpec Report
         if: always()
         env:
           # Specifies how many jobs you would like to run in parallel,
@@ -173,6 +195,13 @@ jobs:
           if [ -f rspec.xml ]; then
             mv rspec.xml rspec-${CI_NODE_INDEX}.xml
           fi
+
+      - name: Copy Code Coverage File From Container
+        if: always()
+        run: |
+          mkdir -p coverage
+          docker cp "$(docker compose ps -q web):/${{ inputs.coverage_path }}" coverage/.resultset.json || true
+
       - name: Move Code Coverage File
         if: always()
         env:
@@ -182,6 +211,7 @@ jobs:
             mkdir -p coverage/${CI_NODE_INDEX}
             mv coverage/.resultset.json coverage/${CI_NODE_INDEX}/.resultset.json
           fi
+
       - id: after_care
         name: Archive Logs and Coverage
         uses: notch8/actions/after-care@add-codecov
