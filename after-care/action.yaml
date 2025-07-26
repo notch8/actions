@@ -27,12 +27,12 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: docker-compose-logs-${{ github.job }}-${{ github.run_attempt }}
+        name: docker-compose-logs-${{ github.run_id }}
         path: docker-compose.log
 
     - name: Archive Spec Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: spec-reports-${{ github.run_attempt }}
+        name: spec-reports-${{ github.run_id }}
         path: ${{ inputs.reports }}
