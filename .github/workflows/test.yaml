@@ -172,7 +172,7 @@ jobs:
           limit-access-to-actor: true
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@v1.0.2
+        uses: notch8/actions/after-care@hykuup-after-care
         if: always()
         with:
           reports: "rspec-*.xml"

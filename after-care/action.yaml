@@ -1,9 +1,11 @@
 name: "Archive Logs and Results"
-description: "capture docker compose logs and test results"
+description: "Capture Docker Compose logs and test result artifacts"
+
 inputs:
   reports:
+    description: "Path or glob to spec report files to upload"
     required: true
-    type: string
+
 runs:
   using: "composite"
   steps:
@@ -20,15 +22,17 @@ runs:
         done
       if: always()
       shell: bash
-    - name: Archive docker-compose logs
+
+    - name: Archive Docker Compose Logs
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: docker-compose-logs
-        path: "docker-compose.log"
-    - name: Archive spec reports
+        name: docker-compose-logs-${{ github.run_attempt }}
+        path: docker-compose.log
+
+    - name: Archive Spec Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: rubocop-reports
+        name: spec-reports-${{ github.run_attempt }}
         path: ${{ inputs.reports }}
