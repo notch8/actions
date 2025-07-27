@@ -192,6 +192,9 @@ jobs:
         run: |
           mkdir -p coverage
           docker cp "$(docker compose ps -q web):/app/samvera/hyrax-webapp/coverage/." coverage/ || echo "No coverage to copy"
+      - name: Fix permissions after docker cp
+        if: always()
+        run: sudo chown -R "$(whoami)":"$(whoami)" coverage/
 
       - name: Move Code Coverage File
         if: always()
