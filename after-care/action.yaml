@@ -37,7 +37,7 @@ runs:
         name: spec-reports-${{ matrix.ci_node_index }}
         path: ${{ inputs.reports }}
 
-    - name: Archive SimpleCov results
+    - name: Upload SimpleCov results
       uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -47,3 +47,11 @@ runs:
         if-no-files-found: warn
         compression-level: 6
         overwrite: true
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        files: coverage/**/.resultset.json
+        flags: rspec
+        name: rspec-matrix
