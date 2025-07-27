@@ -172,7 +172,7 @@ jobs:
       - name: Copy RSpec XML From Container
         if: always()
         run: >-
-          docker cp "$(docker compose ps -q web):/app/rspec.xml" rspec.xml || true
+          docker cp "$(docker compose ps -q web):/app/samvera/hyrax-webapp/rspec.xml" rspec.xml || true
 
       - name: Move RSpec Report
         if: always()
@@ -187,11 +187,27 @@ jobs:
             mv rspec.xml rspec-${CI_NODE_INDEX}.xml
           fi
 
+      # - name: Copy Code Coverage File From Container
+      #   if: always()
+      #   run: |
+      #     mkdir -p coverage
+      #     docker cp "$(docker compose ps -q web):/app/samvera/hyrax-webapp/coverage/." coverage/ || true
+
+      # - name: Move Code Coverage File
+      #   if: always()
+      #   env:
+      #     CI_NODE_INDEX: ${{ matrix.ci_node_index }}
+      #   run: |
+      #     if [ -f coverage/.resultset.json ]; then
+      #       mkdir -p coverage/${CI_NODE_INDEX}
+      #       mv coverage/.resultset.json coverage/${CI_NODE_INDEX}/.resultset.json
+      #     fi
+
       - name: Copy Code Coverage File From Container
         if: always()
         run: |
           mkdir -p coverage
-          docker cp "$(docker compose ps -q web):/app/samvera/hyrax-webapp/coverage/." coverage/ || true
+          docker cp "$(docker compose ps -q web):/app/samvera/hyrax-webapp/coverage/." coverage/ || echo "No coverage to copy"
 
       - name: Move Code Coverage File
         if: always()
@@ -201,6 +217,8 @@ jobs:
           if [ -f coverage/.resultset.json ]; then
             mkdir -p coverage/${CI_NODE_INDEX}
             mv coverage/.resultset.json coverage/${CI_NODE_INDEX}/.resultset.json
+          else
+            echo "No resultset.json to move for node ${CI_NODE_INDEX}"
           fi
 
       - id: after_care
