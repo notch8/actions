@@ -1,0 +1,141 @@
+name: "Deploy"
+on:
+  workflow_dispatch:
+    inputs:
+      image_name:
+        type: string
+        description: "Docker image name part. Fills in ghcr.io/IMAGE_NAME. Typically this is the `repo_name`, but in some projects it might be `repo_name/sub_name`"
+      k8s-release-name:
+        required: false
+        type: string
+      k8s-namespace:
+        required: false
+        type: string
+      deploy-solr-image:
+        description: "Used if you have a solr image to deploy"
+        required: false
+        type: boolean
+      tag:
+        description: "Tag to override default of current branch sha"
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      image_name:
+        type: string
+        description: "Docker image name part. Fills in ghcr.io/IMAGE_NAME. Typically this is the `repo_name`, but in some projects it might be `repo_name/sub_name`"
+      k8s-release-name:
+        required: false
+        type: string
+      k8s-namespace:
+        required: false
+        type: string
+      deploy-solr-image:
+        description: "Used if you have a solr image to deploy"
+        required: false
+        type: boolean
+      tag:
+        description: "Tag to override default of current branch sha"
+        required: false
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    container: dtzar/helm-kubectl:3.9.4
+    environment: ${{ inputs.environment }}
+    env:
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      APP_PASS: ${{ secrets.APP_PASS }}
+      AUTHORIZE_NET_LOGIN: ${{ secrets.AUTHORIZE_NET_LOGIN }}
+      AUTHORIZE_NET_TRANSACTION_KEY: ${{ secrets.AUTHORIZE_NET_TRANSACTION_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_S3_ACCESS_KEY_ID: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+      AWS_S3_SECRET_ACCESS_KEY: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      CLIENT_ADMIN_USER_EMAIL: ${{ secrets.CLIENT_ADMIN_USER_EMAIL }}
+      CLIENT_ADMIN_USER_PASSWORD: ${{ secrets.CLIENT_ADMIN_USER_PASSWORD }}
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      ENCODED_ENV_FILE: ${{ secrets.ENCODED_ENV_FILE }}
+      FCREPO_DB_PASSWORD: ${{ secrets.FCREPO_DB_PASSWORD }}
+      GOOGLE_ANALYTICS_ID: ${{ secrets.GOOGLE_ANALYTICS_ID }}
+      GOOGLE_ANALYTICS_PROPERTY_ID: ${{ secrets.GOOGLE_ANALYTICS_PROPERTY_ID }}
+      GOOGLE_ACCOUNT_JSON: ${{ secrets.GOOGLE_ACCOUNT_JSON }}
+      GOOGLE_FONTS_KEY: ${{ secrets.GOOGLE_FONTS_KEY }}
+      GOOGLE_OAUTH_PRIVATE_KEY_SECRET: ${{ secrets.GOOGLE_OAUTH_PRIVATE_KEY_SECRET }}
+      GOOGLE_OAUTH_PRIVATE_KEY_VALUE: ${{ secrets.GOOGLE_OAUTH_PRIVATE_KEY_VALUE }}
+      HELM_EXPERIMENTAL_OCI: 1
+      HELM_EXTRA_ARGS: >
+        --values ops/${{ inputs.environment }}-deploy.yaml
+      HELM_RELEASE_NAME: ${{ github.event.repository.name }}-${{ inputs.environment }}
+      HYKU_USER_DEFAULT_PASSWORD: ${{ secrets.HYKU_USER_DEFAULT_PASSWORD }}
+      IA_PASSWORD: ${{ secrets.IA_PASSWORD }}
+      INITIAL_ADMIN_EMAIL: ${{ secrets.INITIAL_ADMIN_EMAIL }}
+      INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
+      INITIAL_SUPER_ADMIN_PASSWORD: ${{ secrets.INITIAL_SUPER_ADMIN_PASSWORD }}
+      KUBECONFIG: ./kubeconfig.yml
+      KUBECONFIG_FILE: ${{ secrets.KUBECONFIG_FILE }}
+      KUBE_NAMESPACE: ${{ github.event.repository.name }}-${{ inputs.environment }}
+      MAIL_PASS: ${{ secrets.MAIL_PASS }}
+      MARIADB_PASSWORD: ${{ secrets.MARIADB_PASSWORD }}
+      MARIADB_ROOT_PASSWORD: ${{ secrets.MARIADB_ROOT_PASSWORD }}
+      MYSQL_PASSWORD: ${{ secrets.MARIADB_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      NEGATIVE_CAPTCHA_SECRET: ${{ secrets.NEGATIVE_CAPTCHA_SECRET }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      NEXT_PUBLIC_TOKEN: ${{ secrets.NEXT_PUBLIC_TOKEN }}
+      PAPERTRAIL_API_TOKEN: ${{ secrets.PAPERTRAIL_API_TOKEN }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+      SENDGRID_PASSWORD: ${{ secrets.SENDGRID_PASSWORD }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_ENVIRONMENT: ${{ secrets.SENTRY_ENVIRONMENT }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_USER_NAME: ${{ secrets.SMTP_USER_NAME }}
+      SOLR_ADMIN_PASSWORD: ${{ secrets.SOLR_ADMIN_PASSWORD }}
+      SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_ACCESS_TOKEN }}
+      SQUARE_WEBHOOK_SIGNATURE_KEY: ${{ secrets.SQUARE_WEBHOOK_SIGNATURE_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      WORDPRESS_PASSWORD: ${{ secrets.WORDPRESS_PASSWORD }}
+    steps:
+      - id: setup
+        name: Setup
+        uses: notch8/actions/setup-env@v0.0.26
+        with:
+          tag: ${{ inputs.tag }}
+          image_name: ${{ inputs.image_name }}
+          token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'deploy' }}
+        with:
+          limit-access-to-actor: true
+      - name: Do deploy with solr image
+        if: ${{ inputs.deploy-solr-image }}
+        run: |
+          echo $KUBECONFIG_FILE | base64 -d > $KUBECONFIG;
+          DOLLAR=$ envsubst < ops/${{ inputs.environment }}-deploy.tmpl.yaml > ops/${{ inputs.environment }}-deploy.yaml;
+          export DEPLOY_TAG=${TAG};
+          export DEPLOY_IMAGE=ghcr.io/${REPO_LOWER};
+          export WORKER_IMAGE=ghcr.io/${REPO_LOWER}/worker;
+          export SOLR_IMAGE=ghcr.io/${REPO_LOWER}/solr;
+          ./bin/helm_deploy ${{ inputs.k8s-release-name || format('{0}-{1}', github.event.repository.name, inputs.environment) }} ${{ inputs.k8s-namespace || format('{0}-{1}', github.event.repository.name, inputs.environment) }}
+      - name: Do deploy
+        if: ${{ inputs.deploy-solr-image }} == 'false'
+        run: |
+          echo $KUBECONFIG_FILE | base64 -d > $KUBECONFIG;
+          DOLLAR=$ envsubst < ops/${{ inputs.environment }}-deploy.tmpl.yaml > ops/${{ inputs.environment }}-deploy.yaml;
+          export DEPLOY_TAG=${TAG};
+          export DEPLOY_IMAGE=ghcr.io/${REPO_LOWER};
+          export WORKER_IMAGE=ghcr.io/${REPO_LOWER}/worker;
+          ./bin/helm_deploy ${{ inputs.k8s-release-name || format('{0}-{1}', github.event.repository.name, inputs.environment) }} ${{ inputs.k8s-namespace || format('{0}-{1}', github.event.repository.name, inputs.environment) }}
