@@ -68,7 +68,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v1.0.3
+        uses: notch8/actions/setup-env@add-codecov
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -94,7 +94,9 @@ jobs:
           "${{ inputs.rubocop_cmd }}"
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@v1.0.3
+        uses: notch8/actions/after-care@add-codecov
         if: always()
         with:
-          reports: "rubocop*.xml"
+          reports: "rubocop-${{ matrix.ci_node_index }}.xml"
+        env:
+          CI_NODE_INDEX: ${{ matrix.ci_node_index }}
