@@ -52,8 +52,8 @@ jobs:
   build:
     strategy:
       matrix:
-        component: ${{fromJson(input.components)}}
-        os: ${{fromJson(input.os)}}
+        component: ${{fromJson(inputs.components)}}
+        os: ${{fromJson(inputs.os)}}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
