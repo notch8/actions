@@ -32,11 +32,6 @@ runs:
         echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
         echo "BASE_TAG set to $BASE_TAG"
 
-        if [ "${{ inputs.type }}" = "base" ]; then
-          echo "TAG=$BASE_TAG" >> $GITHUB_ENV
-          echo "TAG set to $BASE_TAG (for base image only)"
-        fi
-
     - name: Build and push ${{ inputs.type }}
       env:
         BUILD_LOCATION: ${{ inputs.location }}
@@ -47,7 +42,7 @@ runs:
         cd ${{ inputs.subdir }};
         [ -f "db/schema.rb" ] && chmod 777 db/schema.rb;
         [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh;
-        TAG=$BASE_TAG docker compose pull base || true;
+        docker compose pull base || true;
         if [ ${BUILD_TYPE} = "web,worker" ]; then
         BUILD_LOCATION='';
         TAG=latest docker compose pull web || true;
