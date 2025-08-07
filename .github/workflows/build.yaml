@@ -2,64 +2,44 @@ name: "Build Docker Images"
 on:
   workflow_dispatch:
     inputs:
-      baseTarget:
-        description: "Used to set your target for the base image"
+      components:
+        default: '["base", "solr", "web", "worker"]'
+        description: "Used to set your target for the components"
         required: false
         type: string
       image_name:
         description: "Docker image name part. Fills in ghcr.io/IMAGE_NAME. Typically this is the `repo_name`, but in some projects it might be `repo_name/sub_name`"
         type: string
-      platforms:
-        default: "linux/amd64,linux/arm64"
-        description: "Which platforms you would like built through CI"
-        type: string
-      solrTarget:
-        description: "Used to set your target for the solr image"
+      os:
+        default: '["ubuntu-latest", "ubuntu-24.04-arm"]'
+        description: "Used to set your target for the operating system"
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
-        required: false
-        type: string
-      webTarget:
-        description: "Used to set your target for the web image"
-        required: false
-        type: string
-      workerTarget:
-        description: "Used to set your target for the worker image"
         required: false
         type: string
   workflow_call:
     inputs:
-      baseTarget:
-        description: "Used to set your target for the base image"
+      components:
+        default: '["base", "solr", "web", "worker"]'
+        description: "Used to set your target for the components"
         required: false
         type: string
       image_name:
         description: "Docker image name part. Fills in ghcr.io/IMAGE_NAME. Typically this is the `repo_name`, but in some projects it might be `repo_name/sub_name`"
         type: string
-      platforms:
-        default: "linux/amd64,linux/arm64"
-        description: "Which platforms you would like built through CI"
-        type: string
-      solrTarget:
-        description: "Used to set your target for the solr image"
+      os:
+        default: '["ubuntu-latest", "ubuntu-24.04-arm"]'
+        description: "Used to set your target for the operating system"
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
-        required: false
-        type: string
-      webTarget:
-        description: "Used to set your target for the web image"
-        required: false
-        type: string
-      workerTarget:
-        description: "Used to set your target for the worker image"
         required: false
         type: string
 
@@ -70,6 +50,65 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        include: fromJson(.matrix)}}
+        component: ${{fromJson(input.components)}}
+        os: ${{fromJson(input.os)}}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Set platform from matrix
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            echo "PLATFORM_TAG=amd64" >> $GITHUB_ENV
+          else
+            echo "PLATFORM_TAG=arm64" >> $GITHUB_ENV
+          fi
+      - id: setup
+        name: Setup
+        uses: notch8/actions/setup-env@v1.0.3
+        with:
+          tag: ${{ inputs.tag }}
+          image_name: ${{ inputs.image_name }}
+          token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+          subdir: ${{ inputs.subdir }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'build' }}
+        with:
+          limit-access-to-actor: true
+      - name: Build Prep
+        run: |
+          echo "Preparing build environment..."
+          cd ${{ inputs.subdir }};
+          [ -f "db/schema.rb" ] && chmod 777 db/schema.rb;
+          [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh;
+      - name: Build and push ${{ matrix.component }} on ${{ matrix.os }}
+        uses: docker/build-push-action@v3
+        with:
+          context: ${{ inputs.subdir }}
+          platforms: linux/${{ env.PLATFORM_TAG }}
+          target: ${{ matrix.component }}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ github.action_repository }}}/${{ matrix.component }}:latest
+          cache-to: type=inline
+          push: true
+          tags: |
+            ${{ github.action_repository }}/${{ matrix.component }}:${{ env.TAG }}-${{ env.PLATFORM_TAG }}
+
+  push:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - id: setup
@@ -80,94 +119,11 @@ jobs:
           image_name: ${{ inputs.image_name }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'build' }}
-        with:
-          limit-access-to-actor: true
-      - name: Retag action for base
-        if: ${{ inputs.baseTarget != '' }}
-        id: meta-base
-        uses: docker/metadata-action@v4.1.1
-        with:
-          images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/base
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-      - name: Retag action for web
-        if: ${{ inputs.webTarget != '' }}
-        id: meta-web
-        uses: docker/metadata-action@v4.1.1
-        with:
-          images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-      - name: Retag action for worker
-        if: ${{ inputs.workerTarget != '' }}
-        id: meta-worker
-        uses: docker/metadata-action@v4.1.1
-        with:
-          images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/worker
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-      - name: Retag action for solr
-        if: ${{ inputs.solrTarget != '' }}
-        id: meta-solr
-        uses: docker/metadata-action@v4.1.1
-        with:
-          images: |
-            name=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/solr
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-      - name: Build and push base
-        if: ${{ inputs.baseTarget != '' }}
-        uses: notch8/actions/build-and-push@v1.0.3
-        with:
-          type: base
-          location: /base
-          subdir: ${{ inputs.subdir }}
-          tags: ${{ steps.meta-base.outputs.tags }}
-      - name: Build and push web and worker
-        if: ${{ inputs.webTarget != '' && inputs.workerTarget != '' }}
-        uses: notch8/actions/build-and-push@v1.0.3
-        with:
-          type: web,worker
-          location: ""
-          subdir: ${{ inputs.subdir }}
-          tags: ${{ steps.meta-base.outputs.tags }}
-      - name: Build and push web
-        if: ${{ inputs.webTarget != '' && inputs.workerTarget == '' }}
-        uses: notch8/actions/build-and-push@v1.0.3
-        with:
-          type: web
-          location: ""
-          subdir: ${{ inputs.subdir }}
-          tags: ${{ steps.meta-base.outputs.tags }}
-      - name: Build and push worker
-        if: ${{ inputs.workerTarget != '' && inputs.webTarget == '' }}
-        uses: notch8/actions/build-and-push@v1.0.3
-        with:
-          type: worker
-          location: /worker
-          subdir: ${{ inputs.subdir }}
-          tags: ${{ steps.meta-worker.outputs.tags }}
-      - name: Build and push solr
-        if: ${{ inputs.solrTarget != '' }}
-        uses: notch8/actions/build-and-push@v1.0.3
-        with:
-          type: solr
-          location: /solr
-          subdir: ${{ inputs.subdir }}
-          tags: ${{ steps.meta-solr.outputs.tags }}
+      - name: Create multiarch manifests
+        run: |
+          components_list=$(echo '${{ inputs.components }}' | jq -r '.[]' | tr '\n' ' ')
+          for component in $components_list; do
+            docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/$component:${{ env.TAG }} \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/$component:${{ env.TAG }}-amd64 \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/$component:${{ env.TAG }}-arm64
+          done

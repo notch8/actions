@@ -2,10 +2,6 @@ name: "Rspec for Rails Apps"
 on:
   workflow_dispatch:
     inputs:
-      baseTarget:
-        description: "Used to set your target for the base image"
-        required: false
-        type: string
       confdir:
         description: "Solr conf/config directory"
         required: false
@@ -50,10 +46,6 @@ on:
         type: string
   workflow_call:
     inputs:
-      baseTarget:
-        description: "Used to set your target for the base image"
-        required: false
-        type: string
       confdir:
         required: false
         type: string

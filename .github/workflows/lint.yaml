@@ -2,58 +2,26 @@ name: "Lint for Rails Projects"
 on:
   workflow_dispatch:
     inputs:
-      baseTarget:
-        description: "Used to set your target for the base image"
-        required: false
-        type: string
       rubocop_cmd:
         default: bundle exec rubocop --parallel --format progress
         required: false
         type: string
-      solrTarget:
-        description: "Used to set your target for the solr image"
-        required: false
-        type: string
       subdir:
         default: "."
         type: string
       tag:
-        required: false
-        type: string
-      webTarget:
-        description: "Used to set your target for the web image"
-        required: false
-        type: string
-      workerTarget:
-        description: "Used to set your target for the worker image"
         required: false
         type: string
   workflow_call:
     inputs:
-      baseTarget:
-        description: "Used to set your target for the base image"
-        required: false
-        type: string
       rubocop_cmd:
         default: bundle exec rubocop --parallel --format progress --format junit --out rubocop.xml --display-only-failed
-        required: false
-        type: string
-      solrTarget:
-        description: "Used to set your target for the solr image"
         required: false
         type: string
       subdir:
         default: "."
         type: string
       tag:
-        required: false
-        type: string
-      webTarget:
-        description: "Used to set your target for the web image"
-        required: false
-        type: string
-      workerTarget:
-        description: "Used to set your target for the worker image"
         required: false
         type: string
 
