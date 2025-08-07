@@ -10,7 +10,7 @@ on:
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
         required: false
@@ -36,7 +36,7 @@ on:
         required: false
         type: string
       subdir:
-        default: '.'
+        default: "."
         type: string
       tag:
         required: false
@@ -70,7 +70,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v1.0.3
+        uses: notch8/actions/setup-env@enter_the_matrix
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -131,4 +131,4 @@ jobs:
         uses: mikepenz/action-junit-report@v3
         if: always() # always run even if the previous step fails
         with:
-          report_paths: 'cypress/results/results-*.xml'
+          report_paths: "cypress/results/results-*.xml"
