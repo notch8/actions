@@ -52,7 +52,6 @@ jobs:
   build:
     strategy:
       matrix:
-        include: fromJson(.matrix)}}
         component: ${{fromJson(input.components)}}
         os: ${{fromJson(input.os)}}
     runs-on: ${{ matrix.os }}
