@@ -68,7 +68,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@add-base-tag-build
+        uses: notch8/actions/setup-env@v1.0.4
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -94,7 +94,7 @@ jobs:
           "${{ inputs.rubocop_cmd }}"
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@add-base-tag-build
+        uses: notch8/actions/after-care@v1.0.4
         if: always()
         with:
           reports: "rubocop*.xml"
