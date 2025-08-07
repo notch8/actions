@@ -28,8 +28,14 @@ runs:
           echo "No submodule found, using 'latest'"
           BASE_TAG="latest"
         fi
+
         echo "BASE_TAG=$BASE_TAG" >> $GITHUB_ENV
         echo "BASE_TAG set to $BASE_TAG"
+
+        if [ "${{ inputs.type }}" = "base" ]; then
+          echo "TAG=$BASE_TAG" >> $GITHUB_ENV
+          echo "TAG set to $BASE_TAG (for base image only)"
+        fi
 
     - name: Build and push ${{ inputs.type }}
       env:
