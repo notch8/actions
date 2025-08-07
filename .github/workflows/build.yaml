@@ -100,11 +100,11 @@ jobs:
           platforms: linux/${{ env.PLATFORM_TAG }}
           target: ${{ matrix.component }}
           cache-from: |
-            type=registry,ref=ghcr.io/${{ github.repository }}/${{ matrix.component }}:latest
+            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}:latest
           cache-to: type=inline
           push: true
           tags: |
-            ${{ github.repository }}/${{ matrix.component }}:${{ env.TAG }}-${{ env.PLATFORM_TAG }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}:${{ env.TAG }}-${{ env.PLATFORM_TAG }}
 
   push:
     needs: build
