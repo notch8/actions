@@ -28,6 +28,7 @@ runs:
       run: echo "TAG=${GIT_SHA::8}" >> $GITHUB_ENV
       env:
         GIT_SHA: ${{ steps.gitsha.outputs.value }}
+      shell: bash
     - name: Downcase repo
       env:
         REPO: "${{ inputs.image_name || github.repository }}"
