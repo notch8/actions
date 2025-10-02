@@ -136,13 +136,11 @@ jobs:
           [ -f "db/schema.rb" ] && chmod 777 db/schema.rb
           [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh
 
-          # Start logging in background
-          docker compose logs -f > docker-compose.log 2>&1 &
-          LOG_PID=$!
-          echo "LOG_PID=$LOG_PID" >> $GITHUB_ENV
           # Start compose
           docker compose pull --ignore-pull-failures
-          docker compose up -d
+          docker compose up -d > docker-compose-server.log 2>&1
+          # Start logging in background
+          docker compose ps --format "{{.Service}}" -a  | xargs -I {} sh -c 'docker compose logs {} > docker-compose_{}.logs 2>&1 &'
       - name: Setup Solr
         if: ${{ inputs.solrTarget != '' }}
         shell: bash
@@ -179,6 +177,7 @@ jobs:
           name: docker-compose-logs-test-${{ matrix.ci_node_index }}-${{ env.TAG }}
           path: |
             docker-compose.log
+            docker-compose-*.log
           retention-days: 14
       - name: Move Test Files
         if: always()

@@ -87,16 +87,13 @@ jobs:
       - name: Start services and capture logs
         run: |
           cd ${{ inputs.subdir }}
-          # Start logging in background
-          docker compose logs -f > docker-compose.log 2>&1 &
-          LOG_PID=$!
-          echo "LOG_PID=$LOG_PID" >> $GITHUB_ENV
-
           # Start services
           [ -f "db/schema.rb" ] && chmod 777 db/schema.rb
           [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh
           docker compose pull web || true
-          docker compose up -d
+          docker compose up -d > docker-compose-server.log 2>&1
+          # Start logging in background
+          docker compose ps --format "{{.Service}}" -a  | xargs -I {} sh -c 'docker compose logs {} > docker-compose_{}.logs 2>&1 &'
       - name: Run Rubocop
         run: >-
           docker compose run -T web sh -c
@@ -104,7 +101,6 @@ jobs:
       - name: Stop services and capture final logs
         if: always()
         run: |
-          kill $LOG_PID || true
           docker compose down || true
       - name: Upload docker-compose logs
         uses: actions/upload-artifact@v4
@@ -113,6 +109,7 @@ jobs:
           name: docker-compose-logs-lint-${{ env.TAG }}
           path: |
             docker-compose.log
+            docker-compose-*.log
           retention-days: 14
       - id: after_care
         name: Upload Logs and Results
