@@ -107,7 +107,7 @@ jobs:
           kill $LOG_PID || true
           docker compose down || true
       - name: Upload docker-compose logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: docker-compose-logs-lint-${{ env.TAG }}
