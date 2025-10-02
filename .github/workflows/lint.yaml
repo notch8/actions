@@ -102,7 +102,7 @@ jobs:
           docker compose down || true
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@v1.0.4
+        uses: notch8/actions/after-care@dc-logging
         if: always()
         with:
           name: lint-${{ env.TAG }}
