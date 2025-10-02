@@ -84,14 +84,36 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'lint' }}
         with:
           limit-access-to-actor: true
+      - name: Start services and capture logs
+        run: |
+          cd ${{ inputs.subdir }}
+          # Start logging in background
+          docker compose logs -f > docker-compose.log 2>&1 &
+          LOG_PID=$!
+          echo "LOG_PID=$LOG_PID" >> $GITHUB_ENV
+
+          # Start services
+          [ -f "db/schema.rb" ] && chmod 777 db/schema.rb
+          [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh
+          docker compose pull web || true
+          docker compose up -d
       - name: Run Rubocop
         run: >-
-          cd ${{ inputs.subdir }};
-          [ -f "db/schema.rb" ] && chmod 777 db/schema.rb;
-          [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh;
-          docker compose pull web || true;
           docker compose run -T web sh -c
           "${{ inputs.rubocop_cmd }}"
+      - name: Stop services and capture final logs
+        if: always()
+        run: |
+          kill $LOG_PID || true
+          docker compose down || true
+      - name: Upload docker-compose logs
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: docker-compose-logs-lint-${{ env.TAG }}
+          path: |
+            docker-compose.log
+          retention-days: 14
       - id: after_care
         name: Upload Logs and Results
         uses: notch8/actions/after-care@v1.0.4
