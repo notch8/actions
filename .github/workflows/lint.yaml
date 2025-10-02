@@ -93,7 +93,7 @@ jobs:
           docker compose pull web || true
           docker compose up -d > docker-compose-server.log 2>&1
           # Start logging in background
-          docker compose ps --format "{{.Service}}" -a  | xargs -I {} sh -c 'docker compose logs {} > docker-compose_{}.logs 2>&1 &'
+          docker compose ps --format "{{.Service}}" -a  | xargs -I {} sh -c 'docker compose logs {} > docker-compose-{}.logs 2>&1 &'
       - name: Run Rubocop
         run: >-
           docker compose run -T web sh -c
