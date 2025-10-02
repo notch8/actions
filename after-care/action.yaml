@@ -2,6 +2,9 @@ name: "Archive Logs and Results"
 description: "Capture Docker Compose logs and test result artifacts"
 
 inputs:
+  name:
+    description: "Name of the artifact"
+    required: false
   reports:
     description: "Path or glob to spec report files to upload"
     required: true
@@ -11,15 +14,8 @@ runs:
   steps:
     - name: Dump Docker Compose Logs (gracefully)
       run: |
-        LOGFILE=docker-compose.log
-        : > "$LOGFILE"
-        for c in $(docker ps --format '{{.Names}}'); do
-          echo "==== Logs for $c ====" >> "$LOGFILE"
-          if ! docker logs "$c" >> "$LOGFILE" 2>&1; then
-            echo "[WARN] Could not retrieve logs for $c" >> "$LOGFILE"
-          fi
-          echo "" >> "$LOGFILE"
-        done
+        docker compose ps --format "{{.Service}}" -a  | xargs -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log'
+        zip docker-compose.logs.zip docker-compose-*.log
       if: always()
       shell: bash
 
@@ -27,12 +23,12 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: docker-compose-logs-${{ matrix.ci_node_index }}
-        path: docker-compose.log
+        name: docker-compose-logs-${{ inputs.name || 'unknown' }}
+        path: docker-compose.logs.zip
 
     - name: Archive Spec Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: spec-reports-${{ matrix.ci_node_index }}
+        name: spec-reports-${{ matrix.ci_node_index || '0' }}
         path: ${{ inputs.reports }}

@@ -139,8 +139,6 @@ jobs:
           # Start compose
           docker compose pull --ignore-pull-failures
           docker compose up -d > docker-compose-server.log 2>&1
-          # Start logging in background
-          docker compose ps --format "{{.Service}}" -a  | xargs -I {} sh -c 'docker compose logs {} > docker-compose-{}.log 2>&1 &'
       - name: Setup Solr
         if: ${{ inputs.solrTarget != '' }}
         shell: bash
@@ -169,16 +167,6 @@ jobs:
         if: always()
         run: |
           docker compose down || true
-          docker compose ps --format "{{.Service}}" -a  | xargs -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log' || true
-      - name: Upload docker-compose logs
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: docker-compose-logs-test-${{ matrix.ci_node_index }}-${{ env.TAG }}
-          path: |
-            docker-compose.log
-            docker-compose-*.log
-          retention-days: 14
       - name: Move Test Files
         if: always()
         env:
@@ -196,4 +184,5 @@ jobs:
         uses: notch8/actions/after-care@v1.0.4
         if: always()
         with:
+          name: test-${{ matrix.ci_node_index }}-${{ env.TAG }}
           reports: "rspec-*.xml"
