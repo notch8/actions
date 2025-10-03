@@ -13,10 +13,10 @@ runs:
   using: "composite"
   steps:
     - name: Dump Docker Compose Logs (gracefully)
-      run: |
-        set -x
-        docker compose ps --format "{{.Service}}" -a  | xargs -t -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log'
-        zip docker-compose.logs.zip docker-compose-*.log
+      run: >-
+        set -x;
+        docker compose ps --format "{{.Service}}" -a  | xargs -t -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log';
+        zip docker-compose.logs.zip docker-compose-*.log;
       if: always()
       shell: bash
 
