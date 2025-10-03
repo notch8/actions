@@ -16,6 +16,10 @@ runs:
       run: docker compose ps --format "{{.Service}}" -a  | xargs -t -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log'
       if: always()
       shell: bash
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true
 
     - name: Zip Docker Compose Logs
       run: zip docker-compose.logs.zip docker-compose-*.log
