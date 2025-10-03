@@ -13,7 +13,7 @@ runs:
   using: "composite"
   steps:
     - name: Dump Docker Compose Logs (gracefully)
-      run: docker compose ps --format "{{.Service}}" -a  | xargs -t -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log'
+      run: docker compose config --format json | jq -r '.services | keys[]' | xargs -t -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log'
       if: always()
       shell: bash
     - name: Setup tmate session
