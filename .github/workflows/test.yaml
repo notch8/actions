@@ -139,6 +139,7 @@ jobs:
           # Start compose
           docker compose pull --ignore-pull-failures
           docker compose up -d > docker-compose-server.log 2>&1
+          docker compose config --format json | jq -r '.services | keys[]' | xargs -t -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log'
       - name: Setup Solr
         if: ${{ inputs.solrTarget != '' }}
         shell: bash
