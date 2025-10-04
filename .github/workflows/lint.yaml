@@ -90,9 +90,14 @@ jobs:
           # Start services
           [ -f "db/schema.rb" ] && chmod 777 db/schema.rb
           [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh
-          docker compose pull web || true
-          docker compose up -d > docker-compose-server.log 2>&1
+          docker compose pull --ignore-pull-failures || true
+          COMPOSE_UP_RESULT=0
+          docker compose up -d > docker-compose-server.log 2>&1 || COMPOSE_UP_RESULT=$?
           docker compose config --format json | jq -r '.services | keys[]' | xargs -t -I {} sh -c 'docker compose logs {} >> docker-compose-{}.log'
+          if [ $COMPOSE_UP_RESULT -ne 0 ]; then
+            echo "Docker Compose up failed with exit code: $COMPOSE_UP_RESULT"
+            exit $COMPOSE_UP_RESULT
+          fi
       - name: Run Rubocop
         run: >-
           docker compose run -T web sh -c
