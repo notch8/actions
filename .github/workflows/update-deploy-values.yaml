@@ -15,7 +15,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v1.0.4
+        uses: notch8/actions/setup-env@v1.0.5
         with:
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
