@@ -187,7 +187,7 @@ jobs:
           fi
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@dc-logging
+        uses: notch8/actions/after-care@@v1.0.4
         if: always()
         with:
           name: test-${{ matrix.ci_node_index }}-${{ env.TAG }}
