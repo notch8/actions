@@ -46,7 +46,7 @@ runs:
         docker compose pull base || true;
         if [ ${BUILD_TYPE} = "web,worker" ]; then
         BUILD_LOCATION='';
-        TAG=latest docker compose pull web || true;
+        docker compose pull web || true;
         docker compose build web --build-arg BUILDKIT_INLINE_CACHE=1 &&
         docker compose push web &&
         ruby -e "ENV.fetch('TAGS', []).split(',').each {|tag| %x{docker tag #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{ENV['TAG']} #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{tag}}; %x{docker push #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{tag}}}" &&
@@ -55,7 +55,7 @@ runs:
         docker compose push worker &&
         ruby -e "ENV.fetch('TAGS', []).split(',').each {|tag| %x{docker tag #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{ENV['TAG']} #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{tag}}; %x{docker push #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{tag}}}";
         else
-        TAG=latest docker compose pull ${BUILD_TYPE} || true;
+        docker compose pull ${BUILD_TYPE} || true;
         docker compose build ${BUILD_TYPE} --build-arg BUILDKIT_INLINE_CACHE=1 &&
         docker compose push ${BUILD_TYPE} &&
         ruby -e "ENV.fetch('TAGS', []).split(',').each {|tag| %x{docker tag #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{ENV['TAG']} #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{tag}}; %x{docker push #{ENV['REGISTRY']}/#{ENV['REPO_LOWER']}#{ENV['BUILD_LOCATION']}:#{tag}}}";
