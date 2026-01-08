@@ -1,7 +1,17 @@
 name: "Rspec for Rails Apps"
+
 on:
   workflow_dispatch:
     inputs:
+      debug_step:
+        required: false
+        description: "Pause the selected step to debug using tmate"
+        type: choice
+        default: ""
+        options:
+          - ""
+          - test
+
       baseTarget:
         description: "Used to set your target for the base image"
         required: false
@@ -50,6 +60,11 @@ on:
         type: string
   workflow_call:
     inputs:
+      debug_step:
+        required: false
+        description: "Pause the selected step to debug using tmate"
+        type: string
+        default: ""
       baseTarget:
         description: "Used to set your target for the base image"
         required: false
@@ -100,16 +115,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Set N number of parallel jobs you want to run tests on.
-        # Use higher number if you have slow tests to split them on more parallel jobs.
-        # Remember to update ci_node_index below to 0..N-1
         ci_node_total: ${{ fromJSON(inputs.node_total) }}
-        # set N-1 indexes for parallel jobs
-        # When you run 2 parallel jobs then first job will have index 0, the second job will have index 1 etc
         ci_node_index: ${{ fromJSON(inputs.node_index) }}
+
     env:
       ALLOW_ANONYMOUS_LOGIN: "yes"
       CONFDIR: ${{ inputs.confdir }}
+
     steps:
       - id: setup
         name: Setup
@@ -118,17 +130,20 @@ jobs:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
+
       - name: Github Container Login
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
+        if: ${{ inputs.debug_step == 'test' }}
         with:
           limit-access-to-actor: true
+
       - name: Start containers
         run: |
           cd ${{ inputs.subdir }}
@@ -145,6 +160,7 @@ jobs:
             echo "Docker Compose up failed with exit code: $COMPOSE_UP_RESULT"
             exit $COMPOSE_UP_RESULT
           fi
+
       - name: Setup Solr
         if: ${{ inputs.solrTarget != '' }}
         shell: bash
@@ -152,39 +168,38 @@ jobs:
           cd ${{ inputs.subdir }};
           docker compose exec -T solr sh -c
           "${{ inputs.setup_solr_cmd }}"
+
       - name: Setup db
         run: >-
           cd ${{ inputs.subdir }};
           docker compose exec -T web sh -c
           "${{ inputs.setup_db_cmd }}"
+
       - name: Run Specs
         id: run-specs
         env:
-          # Specifies how many jobs you would like to run in parallel,
-          # used for partitioning
           CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-          # Use the index from matrix as an environment variable
           CI_NODE_INDEX: ${{ matrix.ci_node_index }}
         run: >-
           cd ${{ inputs.subdir }};
           docker compose exec -T web sh -c
           "${{ inputs.rspec_cmd }}"
+
       - name: Stop services and capture final logs
         if: always()
         run: |
           docker compose down || true
+
       - name: Move Test Files
         if: always()
         env:
-          # Specifies how many jobs you would like to run in parallel,
-          # used for partitioning
           CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-          # Use the index from matrix as an environment variable
           CI_NODE_INDEX: ${{ matrix.ci_node_index }}
         run: |
           if [ -f rspec.xml ]; then
             mv rspec.xml rspec-${CI_NODE_INDEX}.xml
           fi
+
       - id: after_care
         name: Upload Logs and Results
         uses: notch8/actions/after-care@v1.0.8
