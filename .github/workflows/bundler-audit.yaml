@@ -68,17 +68,17 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
         with:
           limit-access-to-actor: true
-      - name: Run Bundler Audit
-        run: >-
-          cd ${{ inputs.subdir }};
+      - name: Run Bundler Audit and Copy Report
+        run: |
+          cd ${{ inputs.subdir }}
           docker compose run --name audit-container web sh -c "gem install bundler-audit && bundler-audit check --update > bundler-audit-report.txt"
-      - name: Copy Report from Container
-        run: >-
-          docker cp audit-container:/bundler-audit-report.txt ./bundler-audit-report.txt
-          docker rm audit-container
+          AUDIT_EXIT=$?
+          docker cp audit-container:/bundler-audit-report.txt ./bundler-audit-report.txt || true
+          docker rm audit-container || true
+          exit $AUDIT_EXIT
       - name: Publish Bundler Audit Report
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: bundler-audit-report
-          path: bundler-audit-report.txt
+          path: ${{ inputs.subdir }}/bundler-audit-report.txt
