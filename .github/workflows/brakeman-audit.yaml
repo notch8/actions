@@ -65,19 +65,22 @@ jobs:
           docker compose pull web
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        if: ${{ inputs.debug_enabled }}
         with:
           limit-access-to-actor: true
       - name: Run Brakeman Audit and Copy Report
         run: |
           cd ${{ inputs.subdir }}
-          docker compose run --name audit-container web sh -c "gem install brakeman && brakeman --force -A --no-assume-routes --no-color -f text > brakeman-audit-report.txt"
+          REPORT_DIR="$GITHUB_WORKSPACE/${{ inputs.subdir }}"
+          docker compose run --rm -v "${REPORT_DIR}:/report" web sh -c "gem install brakeman && brakeman --force -A --no-assume-routes --no-color -f text -o /report/brakeman-audit-report.txt"
           AUDIT_EXIT=$?
-          docker cp audit-container:/brakeman-audit-report.txt ./brakeman-audit-report.txt || true
-          docker rm audit-container || true
-          exit $AUDIT_EXIT
+          if [ ! -f "${REPORT_DIR}/brakeman-audit-report.txt" ]; then
+            echo "Report file was not created; audit or gem install likely failed."
+            exit 1
+          fi
+          exit 0
       - name: Publish Brakeman Audit Report
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: brakeman-audit-report
