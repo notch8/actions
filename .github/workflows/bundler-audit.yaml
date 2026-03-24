@@ -72,7 +72,7 @@ jobs:
         run: |
           cd ${{ inputs.subdir }}
           REPORT_DIR="$GITHUB_WORKSPACE/${{ inputs.subdir }}"
-          docker compose run --rm -v "${REPORT_DIR}:/report" web sh -c "gem install bundler-audit && $ bundle-audit check --format json --update -o /report/bundler-audit-report.json"
+          docker compose run --rm -v "${REPORT_DIR}:/report" web sh -c "gem install bundler-audit && bundler-audit check --format json --update -o /report/bundler-audit-report.json"
           AUDIT_EXIT=$?
           if [ ! -f "${REPORT_DIR}/bundler-audit-report.json" ]; then
             echo "Report file was not created; audit or gem install likely failed."
