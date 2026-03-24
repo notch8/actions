@@ -72,9 +72,9 @@ jobs:
         run: |
           cd ${{ inputs.subdir }}
           REPORT_DIR="$GITHUB_WORKSPACE/${{ inputs.subdir }}"
-          docker compose run --rm -v "${REPORT_DIR}:/report" web sh -c "gem install bundler-audit && bundler-audit check --update -o /report/bundler-audit-report.txt"
+          docker compose run --rm -v "${REPORT_DIR}:/report" web sh -c "gem install bundler-audit && $ bundle-audit check --format json --update -o /report/bundler-audit-report.json"
           AUDIT_EXIT=$?
-          if [ ! -f "${REPORT_DIR}/bundler-audit-report.txt" ]; then
+          if [ ! -f "${REPORT_DIR}/bundler-audit-report.json" ]; then
             echo "Report file was not created; audit or gem install likely failed."
             exit 1
           fi
@@ -84,4 +84,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bundler-audit-report
-          path: ${{ inputs.subdir }}/bundler-audit-report.txt
+          path: ${{ inputs.subdir }}/bundler-audit-report.json
