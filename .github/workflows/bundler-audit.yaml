@@ -1,0 +1,87 @@
+name: "Bundler Audit"
+run-name: Bundler Audit (${{ github.ref_name }}) by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      subdir:
+        default: '.'
+        type: string
+      tag:
+        required: false
+        type: string
+      webTarget:
+        description: "Used to set your target for the web image"
+        required: false
+        type: string
+      debug_enabled:
+        description: "Enable tmate debug session"
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      subdir:
+        default: '.'
+        type: string
+      tag:
+        required: false
+        type: string
+      webTarget:
+        description: "Used to set your target for the web image"
+        required: false
+        type: string
+      debug_enabled:
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  bundler-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - id: setup
+        name: Setup
+        uses: notch8/actions/setup-env@v1.0.8
+        with:
+          tag: ${{ inputs.tag }}
+          token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+          subdir: ${{ inputs.subdir }}
+      - name: Github Container Login
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull web image to prevent build
+        if: ${{ inputs.webTarget != '' }}
+        run: >-
+          cd ${{ inputs.subdir }};
+          touch .env.development;
+          touch .env;
+          docker compose pull web
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ inputs.debug_enabled }}
+        with:
+          limit-access-to-actor: true
+      - name: Run Bundler Audit and Copy Report
+        run: |
+          cd ${{ inputs.subdir }}
+          REPORT_DIR="$GITHUB_WORKSPACE/${{ inputs.subdir }}"
+          docker compose run --rm -v "${REPORT_DIR}:/report" web sh -c "gem install bundler-audit && bundler-audit check --format json --update -o /report/bundler-audit-report.json"
+          AUDIT_EXIT=$?
+          if [ ! -f "${REPORT_DIR}/bundler-audit-report.json" ]; then
+            echo "Report file was not created; audit or gem install likely failed."
+            exit 1
+          fi
+          exit 0
+      - name: Publish Bundler Audit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundler-audit-report
+          path: ${{ inputs.subdir }}/bundler-audit-report.json
