@@ -100,11 +100,11 @@ jobs:
           platforms: linux/${{ env.PLATFORM_TAG }}
           target: ${{ matrix.component }}
           cache-from: |
-            type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}:latest
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.component }}:latest
           cache-to: type=inline
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}:${{ env.TAG }}-${{ env.PLATFORM_TAG }}
+            ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.component }}:${{ env.TAG }}-${{ env.PLATFORM_TAG }}
 
   push:
     needs: build
@@ -122,7 +122,7 @@ jobs:
         run: |
           components_list=$(echo '${{ inputs.components }}' | jq -r '.[]' | tr '\n' ' ')
           for component in $components_list; do
-            docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/$component:${{ env.TAG }} \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/$component:${{ env.TAG }}-amd64 \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/$component:${{ env.TAG }}-arm64
+            docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:${{ env.TAG }} \
+              ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:${{ env.TAG }}-amd64 \
+              ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:${{ env.TAG }}-arm64
           done
