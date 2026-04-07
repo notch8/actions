@@ -21,6 +21,17 @@ on:
       tag:
         required: false
         type: string
+      debug_step:
+        description: "Pause build to debug with tmate (ssh)"
+        required: false
+        type: choice
+        default: ""
+        options:
+          - ""
+          - build
+          - lint
+          - test
+
   workflow_call:
     inputs:
       components:
@@ -42,6 +53,10 @@ on:
       tag:
         required: false
         type: string
+      debug_step:
+        required: false
+        type: string
+        default: ""
 
 env:
   REGISTRY: ghcr.io
@@ -50,6 +65,7 @@ env:
 
 jobs:
   build:
+    permissions: write-all
     strategy:
       matrix:
         component: ${{fromJson(inputs.components)}}
@@ -109,6 +125,7 @@ jobs:
   push:
     needs: build
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - id: setup
         name: Setup
@@ -118,6 +135,14 @@ jobs:
           image_name: ${{ inputs.image_name }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Create multiarch manifests
         run: |
           components_list=$(echo '${{ inputs.components }}' | jq -r '.[]' | tr '\n' ' ')
