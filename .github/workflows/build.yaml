@@ -84,7 +84,7 @@ jobs:
           fi
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@enter_the_matrix
+        uses: notch8/actions/setup-env@v1.0.9
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
@@ -129,7 +129,7 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@enter_the_matrix
+        uses: notch8/actions/setup-env@v1.0.9
         with:
           tag: ${{ inputs.tag }}
           image_name: ${{ inputs.image_name }}
