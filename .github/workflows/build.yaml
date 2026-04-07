@@ -154,7 +154,7 @@ jobs:
           type: web
           location: ""
           subdir: ${{ inputs.subdir }}
-          tags: ${{ steps.meta-base.outputs.tags }}
+          tags: ${{ steps.meta-web.outputs.tags }}
       - name: Build and push worker
         if: ${{ inputs.workerTarget != '' && inputs.webTarget == '' }}
         uses: notch8/actions/build-and-push@v1.0.8
