@@ -116,9 +116,13 @@ jobs:
       - name: Build Prep
         run: |
           echo "Preparing build environment..."
-          cd ${{ inputs.subdir }};
-          [ -f "db/schema.rb" ] && chmod 777 db/schema.rb;
-          [ -f "bin/checkout_all.sh" ] && ./bin/checkout_all.sh;
+          cd "${{ inputs.subdir }}"
+          if [ -f "db/schema.rb" ]; then
+            chmod 777 db/schema.rb
+          fi
+          if [ -f "bin/checkout_all.sh" ]; then
+            ./bin/checkout_all.sh
+          fi
       - name: Build and push ${{ matrix.component }} on ${{ matrix.os }}
         uses: docker/build-push-action@v3
         with:
