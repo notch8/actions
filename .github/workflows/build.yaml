@@ -66,7 +66,7 @@ on:
         description: "Prepended to each component for Dockerfile --target (e.g. hyku- + solr => hyku-solr). Image names still use the component only."
         required: false
         type: string
-        default: ""
+        default: "hyku-"
 
 env:
   REGISTRY: ghcr.io
