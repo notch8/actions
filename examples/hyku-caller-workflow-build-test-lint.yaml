@@ -18,11 +18,8 @@ on:
         options:
           - ""
           - build
-
-env:
-  REGISTRY: ghcr.io
-  DOCKER_BUILDKIT: 1
-  COMPOSE_DOCKER_CLI_BUILD: 1
+          - test
+          - lint
 
 jobs:
   build:
@@ -31,15 +28,13 @@ jobs:
     secrets: inherit
     with:
       components: '["web","worker","solr"]'
-      docker_target_prefix: hyku-
-      debug_step: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step || '' }}
 
   lint:
     needs: build
     uses: notch8/actions/.github/workflows/lint.yaml@v1.0.9
     secrets: inherit
     with:
-      rubocop_cmd: "bundle exec rubocop --parallel --format progress --format junit --out rubocop.xml --display-only-failed"
+      rubocop_cmd: "bundle exec rubocop --parallel --format progress"
 
   test:
     needs: build

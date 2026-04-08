@@ -17,7 +17,6 @@ jobs:
     secrets: inherit
     with:
       components: '["web","worker","solr"]'
-      docker_target_prefix: hyku-
 
   lint:
     needs: build
