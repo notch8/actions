@@ -12,6 +12,11 @@ on:
       tag:
         required: false
         type: string
+      debug_step:
+        description: "Pause lint to debug with tmate (ssh); only when this workflow is run via workflow_dispatch"
+        required: false
+        type: string
+        default: ""
   workflow_call:
     inputs:
       rubocop_cmd:
@@ -24,6 +29,10 @@ on:
       tag:
         required: false
         type: string
+      debug_step:
+        required: false
+        type: string
+        default: ""
 
 env:
   REGISTRY: ghcr.io
