@@ -31,6 +31,11 @@ on:
           - build
           - lint
           - test
+      docker_target_prefix:
+        description: "Prepended to each component for Dockerfile --target (e.g. hyku- + solr => hyku-solr). Image names still use the component only."
+        required: false
+        type: string
+        default: ""
 
   workflow_call:
     inputs:
@@ -54,6 +59,11 @@ on:
         required: false
         type: string
       debug_step:
+        required: false
+        type: string
+        default: ""
+      docker_target_prefix:
+        description: "Prepended to each component for Dockerfile --target (e.g. hyku- + solr => hyku-solr). Image names still use the component only."
         required: false
         type: string
         default: ""
@@ -114,7 +124,7 @@ jobs:
         with:
           context: ${{ inputs.subdir }}
           platforms: linux/${{ env.PLATFORM_TAG }}
-          target: ${{ matrix.component }}
+          target: ${{ inputs.docker_target_prefix }}${{ matrix.component }}
           cache-from: |
             type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.component }}:latest
           cache-to: type=inline
