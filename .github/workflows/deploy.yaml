@@ -131,7 +131,7 @@ jobs:
           export SOLR_IMAGE=ghcr.io/${REPO_LOWER}/solr;
           ./bin/helm_deploy ${{ inputs.k8s-release-name || format('{0}-{1}', github.event.repository.name, inputs.environment) }} ${{ inputs.k8s-namespace || format('{0}-{1}', github.event.repository.name, inputs.environment) }}
       - name: Do deploy
-        if: ${{ inputs.deploy-solr-image }} == 'false'
+        if: ${{ inputs.deploy-solr-image == false }}
         run: |
           echo $KUBECONFIG_FILE | base64 -d > $KUBECONFIG;
           DOLLAR=$ envsubst < ops/${{ inputs.environment }}-deploy.tmpl.yaml > ops/${{ inputs.environment }}-deploy.yaml;
