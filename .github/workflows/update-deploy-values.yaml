@@ -15,11 +15,11 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v1.0.9
+        uses: notch8/actions/setup-env@nodejs24-upgrade
         with:
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.OPS_REPO_WRITER_APP_ID }}
@@ -27,7 +27,7 @@ jobs:
           owner: ${{ github.repository_owner }}
 
       - name: Checkout ops repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ inputs.ops_repository }}
           token: ${{ steps.app-token.outputs.token }}

@@ -114,19 +114,19 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v1.0.9
+        uses: notch8/actions/setup-env@nodejs24-upgrade
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
       - name: Github Container Login
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@v3.24
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'test' }}
         with:
           limit-access-to-actor: true
@@ -176,7 +176,7 @@ jobs:
           fi
       - id: after_care
         name: Upload Logs and Results
-        uses: notch8/actions/after-care@v1.0.9
+        uses: notch8/actions/after-care@nodejs24-upgrade
         if: always()
         with:
           reports: "rspec-*.xml"
