@@ -72,6 +72,7 @@ env:
   REGISTRY: ghcr.io
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
+  DOCKER_BUILD_RECORD_UPLOAD: false
 
 jobs:
   build:

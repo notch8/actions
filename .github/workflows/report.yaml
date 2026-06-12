@@ -21,6 +21,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: artifacts
+          merge-multiple: true
 
         # you need TB_RSPEC_OPTIONS: --format RspecJunitFormatter --out rspec.xml and TB_RSPEC_FORMATTER: progress in your .env for this to work
       - name: Publish Test Report
