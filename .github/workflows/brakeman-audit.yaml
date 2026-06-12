@@ -45,13 +45,13 @@ jobs:
     steps:
       - id: setup
         name: Setup
-        uses: notch8/actions/setup-env@v1.0.9
+        uses: notch8/actions/setup-env@v1.0.10
         with:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
       - name: Github Container Login
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -64,7 +64,7 @@ jobs:
           touch .env;
           docker compose pull web
       - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@v3.24
         if: ${{ inputs.debug_enabled }}
         with:
           limit-access-to-actor: true
@@ -81,7 +81,7 @@ jobs:
           exit 0
       - name: Publish Brakeman Audit Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: brakeman-audit-report
           path: ${{ inputs.subdir }}/brakeman-audit-report.txt
