@@ -167,18 +167,28 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Create multiarch manifests
         run: |
-          components_list=$(echo '${{ inputs.components }}' | jq -r '.[]' | tr '\n' ' ')
-          for component in $components_list; do
-            docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:${{ env.TAG }} \
-              ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:${{ env.TAG }}-amd64 \
-              ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:${{ env.TAG }}-arm64
+          platforms=()
+          for os in $(echo '${{ inputs.os }}' | jq -r '.[]'); do
+            if [ "$os" = "ubuntu-latest" ]; then platforms+=("amd64"); else platforms+=("arm64"); fi
+          done
+          for component in $(echo '${{ inputs.components }}' | jq -r '.[]'); do
+            srcs=()
+            for p in "${platforms[@]}"; do
+              srcs+=("${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${component}:${{ env.TAG }}-${p}")
+            done
+            docker buildx imagetools create -t "${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${component}:${{ env.TAG }}" "${srcs[@]}"
           done
       - name: Create multiarch latest manifests (default branch only)
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         run: |
-          components_list=$(echo '${{ inputs.components }}' | jq -r '.[]' | tr '\n' ' ')
-          for component in $components_list; do
-            docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:latest \
-              ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:latest-amd64 \
-              ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/$component:latest-arm64
+          platforms=()
+          for os in $(echo '${{ inputs.os }}' | jq -r '.[]'); do
+            if [ "$os" = "ubuntu-latest" ]; then platforms+=("amd64"); else platforms+=("arm64"); fi
+          done
+          for component in $(echo '${{ inputs.components }}' | jq -r '.[]'); do
+            srcs=()
+            for p in "${platforms[@]}"; do
+              srcs+=("${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${component}:latest-${p}")
+            done
+            docker buildx imagetools create -t "${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${component}:latest" "${srcs[@]}"
           done
