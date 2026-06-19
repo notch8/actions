@@ -21,6 +21,9 @@ on:
         type: string
   workflow_call:
     inputs:
+      environment:
+        type: string
+        description: "Must be passed explicitly for workflows outside the SoftServ org"
       image_name:
         type: string
         description: "Docker image name part. Fills in ghcr.io/IMAGE_NAME. Typically this is the `repo_name`, but in some projects it might be `repo_name/sub_name`"
