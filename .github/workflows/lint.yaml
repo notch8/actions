@@ -2,6 +2,10 @@ name: "Lint for Rails Projects"
 on:
   workflow_dispatch:
     inputs:
+      compose_file:
+        description: "COMPOSE_FILE for the lint stack, colon separated. Set it where the deployed stack needs an override file, so CI runs the same configuration."
+        required: false
+        type: string
       rubocop_cmd:
         default: bundle exec rubocop --parallel --format progress
         required: false
@@ -19,6 +23,10 @@ on:
         default: ""
   workflow_call:
     inputs:
+      compose_file:
+        description: "COMPOSE_FILE for the lint stack, colon separated. Set it where the deployed stack needs an override file, so CI runs the same configuration."
+        required: false
+        type: string
       rubocop_cmd:
         default: bundle exec rubocop --parallel --format progress --format junit --out rubocop.xml --display-only-failed
         required: false
@@ -50,6 +58,12 @@ jobs:
           tag: ${{ inputs.tag }}
           token: ${{ secrets.CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
           subdir: ${{ inputs.subdir }}
+      # Exported here rather than in the job's env block so it stays unset for a caller
+      # that supplies nothing: docker compose reads an empty COMPOSE_FILE as a path and
+      # fails, where an absent one lets it resolve the compose files itself.
+      - name: Set COMPOSE_FILE
+        if: ${{ inputs.compose_file != '' }}
+        run: echo "COMPOSE_FILE=${{ inputs.compose_file }}" >> "$GITHUB_ENV"
       - name: Github Container Login
         uses: docker/login-action@v4
         with:
