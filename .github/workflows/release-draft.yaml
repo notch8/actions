@@ -1,0 +1,44 @@
+name: "Draft Release Notes"
+on:
+  workflow_call:
+    inputs:
+      staging-config:
+        description: "release-drafter config in the caller's .github/ for staging pushes, drafted as a prerelease"
+        required: false
+        type: string
+        default: release-drafter-staging.yml
+      production-config:
+        description: "release-drafter config in the caller's .github/ for every other branch"
+        required: false
+        type: string
+        default: release-drafter.yml
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    env:
+      IS_STAGING: ${{ github.ref_name == 'staging' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Record the pinned Hyku
+        id: hyku
+        run: |
+          if [ ! -f hyrax-webapp/config/initializers/version.rb ]; then exit 0; fi
+          sha=$(git ls-tree HEAD hyrax-webapp | awk '{print $3}')
+          version=$(ruby -e 'load "hyrax-webapp/config/initializers/version.rb"; print Hyku::VERSION')
+          echo "footer=Built on Hyku ${version} ([\`${sha:0:7}\`](https://github.com/samvera/hyku/commit/${sha}))." >> "$GITHUB_OUTPUT"
+
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: ${{ env.IS_STAGING == 'true' && inputs.staging-config || inputs.production-config }}
+          commitish: ${{ github.ref_name }}
+          prerelease: ${{ env.IS_STAGING }}
+          footer: ${{ steps.hyku.outputs.footer }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
