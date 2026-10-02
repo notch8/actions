@@ -1,0 +1,44 @@
+name: "Auto-Merger"
+description: "Open or update a merge-down PR when a change lands on a promotion branch without coming from the branch below it"
+
+inputs:
+  app-id:
+    description: "GitHub App ID. The merge-down PR needs an App token so CI runs on it; the action skips when this or private-key is empty."
+    required: false
+    default: ""
+  private-key:
+    description: "GitHub App private key"
+    required: false
+    default: ""
+  merges:
+    description: 'JSON map of pushed branch to the branch it merges down into. Hyku''s GitLab flow is the default; main -> production repos pass {"production":"main"}.'
+    required: false
+    default: '{"staging":"main","production":"staging"}'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Skip without the GitHub App secrets
+      if: inputs.app-id == '' || inputs.private-key == ''
+      shell: bash
+      run: echo "::notice::AUTO_MERGER_APP_ID / AUTO_MERGER_APP_PRIVATE_KEY are not set; skipping merge-down."
+
+    - name: Generate a token
+      if: inputs.app-id != '' && inputs.private-key != ''
+      id: generate_token
+      uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+
+    - name: Open or update merge-down pull request
+      if: inputs.app-id != '' && inputs.private-key != ''
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        MERGES: ${{ inputs.merges }}
+      with:
+        github-token: ${{ steps.generate_token.outputs.token }}
+        script: |
+          const script = require(`${process.env.ACTION_PATH}/auto-merger.cjs`)
+          await script({ github, context, merges: JSON.parse(process.env.MERGES) })
