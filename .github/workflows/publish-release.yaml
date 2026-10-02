@@ -1,0 +1,56 @@
+name: "Publish Release"
+on:
+  workflow_call:
+    inputs:
+      sha:
+        description: "Deployed commit to pin the release to"
+        required: true
+        type: string
+      deploy-run-id:
+        description: "Deploy run that triggered this; publishing is skipped unless its deploy job ran"
+        required: true
+        type: string
+      environment:
+        description: "Environment whose required reviewers approve publishing"
+        required: false
+        type: string
+        default: production
+
+jobs:
+  # A Deploy run after a PR build "succeeds" with every job skipped, so look for a real deploy
+  # before asking anyone to approve.
+  deployed:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      ran: ${{ steps.check.outputs.ran }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.deploy-run-id }}
+        run: |
+          ran=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.name | startswith("deploy")) | .conclusion] | any(. == "success")')
+          echo "ran=$ran" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: deployed
+    if: needs.deployed.outputs.ran == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: write
+    steps:
+      - name: Publish the newest stable draft at the deployed commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ inputs.sha }}
+        run: |
+          tag=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq '[.[] | select(.draft and (.prerelease | not))][0].tag_name // empty')
+          if [ -z "$tag" ]; then
+            echo "::error::No stable draft release to publish"
+            exit 1
+          fi
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false --target "$SHA"
+          echo "Published $tag at $SHA" >> "$GITHUB_STEP_SUMMARY"
