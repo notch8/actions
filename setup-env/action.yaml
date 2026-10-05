@@ -18,9 +18,14 @@ runs:
   using: "composite"
   steps:
     - name: Set env
+      env:
+        PR_SHA: ${{ github.event.pull_request.head.sha }}
+        WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |
         if [ "${{ github.event_name }}" = "pull_request" ]; then
-          GIT_SHA="${{ github.event.pull_request.head.sha }}"
+          GIT_SHA="$PR_SHA"
+        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+          GIT_SHA="$WORKFLOW_RUN_SHA"
         else
           GIT_SHA="${{ github.sha }}"
         fi
@@ -35,6 +40,8 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v5
       with:
+        # workflow_run otherwise checks out the default branch, not the commit that was built
+        ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
         fetch-depth: 0
         submodules: true
         token: ${{ inputs.token }}
