@@ -51,3 +51,4 @@ jobs:
       sha: ${{ github.event.workflow_run.head_sha }}
       deploy-run-id: ${{ github.event.workflow_run.id }}
 ```
+See `examples/` for caller workflows, including a deploy that runs after Build Test Lint succeeds on `main`, `staging` or `production`.
