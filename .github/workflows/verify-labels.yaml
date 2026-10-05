@@ -1,0 +1,22 @@
+name: "Verify Labels"
+on:
+  workflow_call:
+    inputs:
+      one_of:
+        description: "Comma-separated labels; the PR needs exactly one"
+        required: false
+        type: string
+        default: patch-ver,minor-ver,major-ver,ignore-for-release,dependencies
+
+jobs:
+  check_pr_labels:
+    runs-on: ubuntu-latest
+    name: PR has required labels
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check PR for Release Notes labels
+        uses: docker://agilepathway/pull-request-label-checker@sha256:253c71fe97d6ae19fff21608f1e10493ec322e7c95d4fed4695b2b8d11f58fb2 # v1.6.115
+        with:
+          one_of: ${{ inputs.one_of }}
+          repo_token: ${{ github.token }}
