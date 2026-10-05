@@ -61,6 +61,25 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_step == 'lint' }}
         with:
           limit-access-to-actor: true
+      # Fork PRs can't push to GHCR, so the build job exported the images as
+      # artifacts instead. Load them so `docker compose` finds them locally.
+      # No-op on same-repo runs, where images come from the registry.
+      - name: Download fork-PR image tarballs
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fork-image-*
+          path: /tmp/fork-images
+          merge-multiple: true
+      - name: Load fork-PR images
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for f in /tmp/fork-images/*.tar; do
+            echo "Loading $f";
+            docker load -i "$f";
+          done
       - name: Run Rubocop
         run: >-
           cd ${{ inputs.subdir }};

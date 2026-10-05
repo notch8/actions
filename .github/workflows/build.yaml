@@ -144,9 +144,33 @@ jobs:
           cache-to: type=inline
           # Fork PRs get a read-only GITHUB_TOKEN and cannot write org packages,
           # so only push on same-repo events. Fork PRs still build (validating
-          # the Dockerfile); they just skip the registry push.
+          # the Dockerfile); instead of pushing they load the image locally so
+          # it can be exported to the test/lint jobs as an artifact (see below).
           push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          load: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && matrix.os == 'ubuntu-latest' }}
           tags: ${{ steps.meta.outputs.tags }}
+
+      # Fork PRs can't push to GHCR, so the downstream test/lint jobs have no
+      # image to pull. Hand the built image to them as a workflow artifact
+      # instead. Only the amd64 leg is exported, since test/lint run on
+      # ubuntu-latest; the arm leg still builds to validate the Dockerfile.
+      - name: Export image tarball for fork PRs
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && matrix.os == 'ubuntu-latest' }}
+        run: |
+          src="${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.component }}:${{ env.TAG }}-${{ env.PLATFORM_TAG }}"
+          # Retag to the platform-less tag the multiarch manifest would have
+          # created (docker-compose references `:${TAG}`), which the push job
+          # is skipped for on fork PRs.
+          dst="${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.component }}:${{ env.TAG }}"
+          docker tag "$src" "$dst"
+          docker save "$dst" -o "/tmp/fork-image-${{ matrix.component }}.tar"
+      - name: Upload image tarball for fork PRs
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: fork-image-${{ matrix.component }}
+          path: /tmp/fork-image-${{ matrix.component }}.tar
+          retention-days: 1
 
   push:
     needs: build
