@@ -10,15 +10,11 @@ on:
         description: "Deploy run that triggered this; publishing is skipped unless its deploy job ran"
         required: true
         type: string
-      environment:
-        description: "Environment whose required reviewers approve publishing"
-        required: false
-        type: string
-        default: production
 
 jobs:
   # A Deploy run after a PR build "succeeds" with every job skipped, so look for a real deploy
-  # before asking anyone to approve.
+  # before publishing. Publishing needs no approval of its own: the deploy it follows was
+  # already approved, and a release is only notes and a tag.
   deployed:
     runs-on: ubuntu-latest
     permissions:
@@ -38,7 +34,6 @@ jobs:
     needs: deployed
     if: needs.deployed.outputs.ran == 'true'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     permissions:
       contents: write
     steps:
