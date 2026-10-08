@@ -61,9 +61,18 @@ module.exports = async ({ github, context, merges }) => {
   async function prepareMerge({ head, base }, pullRequests) {
     const marker = '<!-- hyku-auto-merger -->'
     const date = new Date().toISOString().split('T')[0]
-    const title = `\`${head}\` -> \`${base}\` ${date}`
-    const pullRequestList = pullRequests.map(pullRequest => `- #${pullRequest.number}`).join('\n')
-    const body = `${marker}\nBrings the following changes to \`${base}\`:\n\n${pullRequestList}`
+    const title = `Merge down \`${head}\` -> \`${base}\` (${date})`
+    const pullRequestList = pullRequests.map(pullRequest => `- #${pullRequest.number} ${pullRequest.title}`).join('\n')
+    const body = [
+      marker,
+      `**Automatic merge-down.** These pull requests went straight into \`${head}\`, so this brings them into \`${base}\` too:`,
+      '',
+      pullRequestList,
+      '',
+      `**Review and merge it; don't close it.** Until \`${base}\` has these changes, anything built from \`${base}\` (its environment, new branches) lacks them, and the branches drift apart.`,
+      '',
+      `Opened by the auto-merger after a push to \`${head}\`. It updates this PR if more changes land there first.`
+    ].join('\n')
 
     const openPullRequests = await github.rest.pulls.list({
       owner: context.repo.owner,
