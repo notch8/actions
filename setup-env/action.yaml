@@ -20,9 +20,15 @@ runs:
     - name: Set env
       env:
         PR_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |
-        if [ "${{ github.event_name }}" = "pull_request" ]; then
+        # A merge-down PR's head is an environment branch, whose own push build already
+        # publishes an image under that SHA. Tag by the merge commit it actually builds instead,
+        # or it overwrites the environment's image with one built from the merged code.
+        if [ "${{ github.event_name }}" = "pull_request" ] && [[ "$PR_HEAD_REF" =~ ^(main|staging|production)(-test)?$ ]]; then
+          GIT_SHA="${{ github.sha }}"
+        elif [ "${{ github.event_name }}" = "pull_request" ]; then
           GIT_SHA="$PR_SHA"
         elif [ "${{ github.event_name }}" = "workflow_run" ]; then
           GIT_SHA="$WORKFLOW_RUN_SHA"
