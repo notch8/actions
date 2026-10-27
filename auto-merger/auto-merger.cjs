@@ -71,6 +71,42 @@ module.exports = async ({ github, context, merges }) => {
     return [...pullRequests.values()]
   }
 
+  // A PR's head branch is deleted when it merges (delete_branch_on_merge), so the head can never
+  // be the real environment branch - that's what deleted hykuup_knapsack's `staging` outright.
+  // Mirror the branch under a throwaway name and point the PR at that instead.
+  function mirrorBranch(branch) {
+    return `merge-down/${branch}`
+  }
+
+  async function syncMirrorBranch(branch) {
+    const mirror = mirrorBranch(branch)
+    const { data: ref } = await github.rest.git.getRef({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      ref: `heads/${branch}`
+    })
+
+    try {
+      await github.rest.git.updateRef({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        ref: `heads/${mirror}`,
+        sha: ref.object.sha,
+        force: true
+      })
+    } catch (error) {
+      if (error.status !== 422 && error.status !== 404) throw error
+      await github.rest.git.createRef({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        ref: `refs/heads/${mirror}`,
+        sha: ref.object.sha
+      })
+    }
+
+    return mirror
+  }
+
   async function findAutoMergePullRequest({ head, base }) {
     const openPullRequests = await github.rest.pulls.list({
       owner: context.repo.owner,
@@ -87,7 +123,7 @@ module.exports = async ({ github, context, merges }) => {
 
   // An auto-merger PR opened before the changes it carried reached the base some other way.
   async function closeEmptyMerge(merge) {
-    const { autoMergePullRequest } = await findAutoMergePullRequest(merge)
+    const { autoMergePullRequest } = await findAutoMergePullRequest({ head: mirrorBranch(merge.head), base: merge.base })
     if (!autoMergePullRequest) return
 
     console.log(`Closing #${autoMergePullRequest.number}; it no longer changes any files.`)
@@ -120,7 +156,8 @@ module.exports = async ({ github, context, merges }) => {
       `Opened by the auto-merger after a push to \`${head}\`. It updates this PR if more changes land there first.`
     ].join('\n')
 
-    const { openPullRequests, autoMergePullRequest } = await findAutoMergePullRequest({ head, base })
+    const mirrorHead = await syncMirrorBranch(head)
+    const { openPullRequests, autoMergePullRequest } = await findAutoMergePullRequest({ head: mirrorHead, base })
 
     if (autoMergePullRequest) {
       console.log(`Updating ${head} -> ${base} PR #${autoMergePullRequest.number}.`)
@@ -138,7 +175,7 @@ module.exports = async ({ github, context, merges }) => {
         repo: context.repo.repo,
         title,
         body,
-        head,
+        head: mirrorHead,
         base,
         draft: true
       })
