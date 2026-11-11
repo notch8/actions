@@ -36,6 +36,11 @@ on:
         required: false
         type: string
         default: ""
+      solr_version:
+        description: "Solr major version to build the solr component with (passed as --build-arg SOLR_VERSION); empty keeps the Dockerfile default. Use on PRs/dispatch, not default branches: the image is also tagged latest there."
+        required: false
+        type: string
+        default: ""
 
   workflow_call:
     inputs:
@@ -67,6 +72,10 @@ on:
         required: false
         type: string
         default: "hyku-"
+      solr_version:
+        required: false
+        type: string
+        default: ""
 
 env:
   REGISTRY: ghcr.io
@@ -142,6 +151,7 @@ jobs:
           cache-from: |
             type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.component }}:latest
           cache-to: type=inline
+          build-args: ${{ matrix.component == 'solr' && inputs.solr_version != '' && format('SOLR_VERSION={0}', inputs.solr_version) || '' }}
           # Fork PRs get a read-only GITHUB_TOKEN and cannot write org packages,
           # so only push on same-repo events. Fork PRs still build (validating
           # the Dockerfile); instead of pushing they load the image locally so
