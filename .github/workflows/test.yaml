@@ -36,6 +36,11 @@ on:
         description: "Used to set your target for the solr image"
         required: false
         type: string
+      solr_version:
+        description: "Solr major version for the solr service; 9+ adds the compose override Solr 9 needs (Hyku docs/using-solr-9.md). Build the image with the same solr_version. Empty keeps the app's default"
+        required: false
+        type: string
+        default: ""
       subdir:
         description: "Used to set your subdirectory"
         default: "."
@@ -84,6 +89,10 @@ on:
         description: "Used to set your target for the solr image"
         required: false
         type: string
+      solr_version:
+        required: false
+        type: string
+        default: ""
       subdir:
         default: "."
         type: string
@@ -162,6 +171,17 @@ jobs:
             echo "Loading $f";
             docker load -i "$f";
           done
+      - name: Add Solr 9 compose override
+        if: ${{ inputs.solr_version != '' && inputs.solr_version >= 9 }}
+        run: |
+          cd ${{ inputs.subdir }}
+          cat > docker-compose.override.yml <<'EOF'
+          services:
+            solr:
+              environment:
+                # Settings Solr 9 needs that don't exist on Solr 8 (same as Hyku's docker-compose.override-solr-9.yml).
+                - SOLR_OPTS=-Dsolr.config.lib.enabled=true -Dsolr.filterCache.class=solr.CaffeineCache -Dsolr.queryResultCache.class=solr.CaffeineCache -Dsolr.documentCache.class=solr.CaffeineCache
+          EOF
       - name: Start containers
         run: >-
           cd ${{ inputs.subdir }};
