@@ -44,6 +44,11 @@ on:
         description: "tag"
         required: false
         type: string
+      postgres_version:
+        description: "Postgres major version for the db service (sets POSTGRES_VERSION and the PG18+ data dir); empty uses the app's compose default"
+        required: false
+        type: string
+        default: ""
       debug_step:
         description: "Pause test to debug with tmate (ssh); only when this workflow is run via workflow_dispatch"
         required: false
@@ -85,6 +90,10 @@ on:
       tag:
         required: false
         type: string
+      postgres_version:
+        required: false
+        type: string
+        default: ""
       debug_step:
         required: false
         type: string
@@ -111,6 +120,9 @@ jobs:
     env:
       ALLOW_ANONYMOUS_LOGIN: "yes"
       CONFDIR: ${{ inputs.confdir }}
+      # Empty falls back to the compose file's own default (`${VAR:-default}`); PG18+ mounts its volume at /var/lib/postgresql.
+      POSTGRES_VERSION: ${{ inputs.postgres_version }}
+      POSTGRES_DATA_DIR: ${{ inputs.postgres_version != '' && inputs.postgres_version >= 18 && '/var/lib/postgresql' || '' }}
     steps:
       - id: setup
         name: Setup
